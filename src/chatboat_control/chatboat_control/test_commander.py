@@ -110,7 +110,7 @@ class TestCommander(Node):
 
     def _send_arm(self, positions, jaw_pos=None):
         msg = JointState()
-        msg.name = ['axis_e', 'axis_d', 'axis_c', 'axis_b']
+        msg.name = ['chatboat/axis_e', 'chatboat/axis_d', 'chatboat/axis_c', 'chatboat/axis_b']
         msg.position = [float(p) for p in positions]
         if jaw_pos is not None:
             msg.name += ['jaw_left_joint', 'jaw_right_joint']
