@@ -109,5 +109,22 @@
       <axis xyz="0 0 -1"/>
       <limit lower="0.0" upper="3.22" effort="9.0" velocity="0.5"/>
     </joint>
+
+    <link name="arm_tcp_adapter">
+      <visual>
+        <geometry><cylinder radius="0.020" length="0.040"/></geometry>
+        <origin xyz="0 0 0.02"/>
+        <material name="arm_dark"/>
+      </visual>
+      <inertial><mass value="0.050"/>
+        <origin xyz="0 0 0.02"/>
+        <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
+      </inertial>
+    </link>
+    <joint name="tcp_adapter_joint" type="fixed">
+      <parent link="arm_wrist"/>
+      <child link="arm_tcp_adapter"/>
+      <origin xyz="0 0 0.09975"/>
+    </joint>
   </xacro:macro>
 </robot>

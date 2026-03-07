@@ -187,14 +187,20 @@
     <!-- ============================================================== -->
     <!-- MANIPULATOR ARM: Reach Alpha 5 (4 revolute DOF + gripper)      -->
     <!-- Kinematic chain translated from reach_description URDF         -->
-    <!-- Using cylinder primitives; upgrade to OBJ meshes via           -->
-    <!--   scripts/convert_dae_to_obj.py                                -->
+    <!-- Using OBJ meshes converted from reach_description DAE files    -->
     <!-- ============================================================== -->
 
     <!-- Arm base adapter (URDF: base_link, RS1-1010) -->
-    <link name="arm_base" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.130"/>
-      <origin xyz="-0.055 0.0 0.0" rpy="0.0 1.5708 0.0"/>
+    <link name="arm_base" type="model" physics="submerged" buoyant="true">
+      <physical>
+        <mesh filename="alpha5/RS1-1010.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+        <thickness value="0.005"/>
+      </physical>
+      <visual>
+        <mesh filename="alpha5/RS1-1010.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </visual>
       <material name="Aluminium"/>
       <mass value="0.234"/>
       <look name="arm_dark"/>
@@ -206,9 +212,16 @@
     </joint>
 
     <!-- Inline actuator (URDF: m3_inline_link, M3-INLINE) -->
-    <link name="arm_inline" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.150"/>
-      <origin xyz="-0.055 0.0 0.0" rpy="0.0 1.5708 0.0"/>
+    <link name="arm_inline" type="model" physics="submerged" buoyant="true">
+      <physical>
+        <mesh filename="alpha5/M3-INLINE.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+        <thickness value="0.005"/>
+      </physical>
+      <visual>
+        <mesh filename="alpha5/M3-INLINE.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </visual>
       <material name="Aluminium"/>
       <mass value="0.341"/>
       <look name="arm_dark"/>
@@ -220,9 +233,16 @@
     </joint>
 
     <!-- Joint E connector (URDF: m2_1_1_link, M2-1-1) -->
-    <link name="arm_connector" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.040"/>
-      <origin xyz="0.0 0.0 0.020" rpy="0.0 0.0 0.0"/>
+    <link name="arm_connector" type="model" physics="submerged" buoyant="true">
+      <physical>
+        <mesh filename="alpha5/M2-1-1.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+        <thickness value="0.005"/>
+      </physical>
+      <visual>
+        <mesh filename="alpha5/M2-1-1.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </visual>
       <material name="Aluminium"/>
       <mass value="0.194"/>
       <look name="arm_orange"/>
@@ -236,9 +256,16 @@
     </joint>
 
     <!-- Main arm segment (URDF: m2_link, M2) — longest link -->
-    <link name="arm_upper" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.145"/>
-      <origin xyz="-0.02 0.0 -0.0725" rpy="0.0 0.0 0.0"/>
+    <link name="arm_upper" type="model" physics="submerged" buoyant="true">
+      <physical>
+        <mesh filename="alpha5/M2.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+        <thickness value="0.005"/>
+      </physical>
+      <visual>
+        <mesh filename="alpha5/M2.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </visual>
       <material name="Aluminium"/>
       <mass value="0.429"/>
       <look name="arm_orange"/>
@@ -252,9 +279,16 @@
     </joint>
 
     <!-- Elbow connector (URDF: m2_1_3_link, M2-1-3) -->
-    <link name="arm_elbow" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.040"/>
-      <origin xyz="0.02 0.0 0.020" rpy="0.0 0.0 0.0"/>
+    <link name="arm_elbow" type="model" physics="submerged" buoyant="true">
+      <physical>
+        <mesh filename="alpha5/M2-1-3.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+        <thickness value="0.005"/>
+      </physical>
+      <visual>
+        <mesh filename="alpha5/M2-1-3.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </visual>
       <material name="Aluminium"/>
       <mass value="0.115"/>
       <look name="arm_orange"/>
@@ -267,10 +301,17 @@
       <limits min="0.0" max="3.22"/>
     </joint>
 
-    <!-- Wrist (URDF: m1_link, M1) -->
-    <link name="arm_wrist" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.100"/>
-      <origin xyz="0.0 0.0 0.05" rpy="0.0 0.0 0.0"/>
+    <!-- Wrist (URDF: m1_link, M1) — mesh needs -90° Y rotation -->
+    <link name="arm_wrist" type="model" physics="submerged" buoyant="true">
+      <physical>
+        <mesh filename="alpha5/M1.obj" scale="1.0"/>
+        <origin rpy="0.0 -1.5708 0.0" xyz="0.0 0.0 0.0"/>
+        <thickness value="0.005"/>
+      </physical>
+      <visual>
+        <mesh filename="alpha5/M1.obj" scale="1.0"/>
+        <origin rpy="0.0 -1.5708 0.0" xyz="0.0 0.0 0.0"/>
+      </visual>
       <material name="Aluminium"/>
       <mass value="0.200"/>
       <look name="arm_dark"/>
@@ -283,6 +324,27 @@
       <limits min="0.0" max="3.22"/>
     </joint>
 
+    <!-- TCP adapter (URDF: rs1_124_link, RS1-124) — between wrist and gripper -->
+    <link name="arm_tcp_adapter" type="model" physics="submerged" buoyant="true">
+      <physical>
+        <mesh filename="alpha5/RS1-124.obj" scale="1.0"/>
+        <origin rpy="0.0 -1.5708 0.0" xyz="0.0 0.0 0.0"/>
+        <thickness value="0.005"/>
+      </physical>
+      <visual>
+        <mesh filename="alpha5/RS1-124.obj" scale="1.0"/>
+        <origin rpy="0.0 -1.5708 0.0" xyz="0.0 0.0 0.0"/>
+      </visual>
+      <material name="Aluminium"/>
+      <mass value="0.050"/>
+      <look name="arm_dark"/>
+    </link>
+    <joint name="tcp_adapter_joint" type="fixed">
+      <parent name="arm_wrist"/>
+      <child name="arm_tcp_adapter"/>
+      <origin xyz="0.0 0.0 0.09975" rpy="0.0 0.0 0.0"/>
+    </joint>
+
     <!-- Magnetic gripper tip (replaces Reach Alpha 5 jaws) -->
     <link name="gripper_tip" type="sphere" physics="submerged" buoyant="true">
       <dimensions radius="0.035"/>
@@ -292,9 +354,9 @@
       <look name="red"/>
     </link>
     <joint name="gripper_joint" type="fixed">
-      <parent name="arm_wrist"/>
+      <parent name="arm_tcp_adapter"/>
       <child name="gripper_tip"/>
-      <origin xyz="0.0 0.0 0.14" rpy="0.0 0.0 0.0"/>
+      <origin xyz="0.0 0.0 0.04" rpy="0.0 0.0 0.0"/>
     </joint>
 
     <!-- End-effector control frame -->

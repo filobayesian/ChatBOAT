@@ -23,6 +23,6 @@
   <xacro:alpha5 parent="$(arg namespace)/base_link" namespace="$(arg namespace)"/>
 
   <!-- Instantiate gripper (at end of arm) -->
-  <xacro:gripper parent="arm_wrist"/>
+  <xacro:gripper parent="arm_tcp_adapter"/>
 
 </robot>
