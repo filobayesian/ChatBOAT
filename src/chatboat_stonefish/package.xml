@@ -3,7 +3,7 @@
 <package format="3">
   <name>chatboat_stonefish</name>
   <version>0.1.0</version>
-  <description>Stonefish simulation scenario and launch for GIRONA500 UVMS</description>
+  <description>Stonefish simulation scenario and launch for BlueROV2 Heavy + Reach Alpha 5 UVMS</description>
   <maintainer email="todo@todo.com">chatboat</maintainer>
   <license>MIT</license>
 

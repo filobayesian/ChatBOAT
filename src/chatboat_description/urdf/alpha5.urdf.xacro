@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="alpha5" params="parent namespace:=chatboat">
+    <link name="arm_base">
+      <visual>
+        <geometry><cylinder radius="0.020" length="0.130"/></geometry>
+        <origin rpy="0 1.5708 0" xyz="-0.055 0 0"/>
+        <material name="arm_dark"><color rgba="0.25 0.25 0.25 1.0"/></material>
+      </visual>
+      <inertial><mass value="0.234"/>
+        <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+      </inertial>
+    </link>
+    <joint name="arm_base_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="arm_base"/>
+      <origin xyz="0.18 0.0 0.08"/>
+    </joint>
+
+    <link name="arm_inline">
+      <visual>
+        <geometry><cylinder radius="0.020" length="0.150"/></geometry>
+        <origin rpy="0 1.5708 0" xyz="-0.055 0 0"/>
+        <material name="arm_dark"/>
+      </visual>
+      <inertial><mass value="0.341"/>
+        <origin xyz="-0.055 0 0"/>
+        <inertia ixx="0.0000682" ixy="0" ixz="0" iyy="0.000673" iyz="0" izz="0.000673"/>
+      </inertial>
+    </link>
+    <joint name="arm_inline_joint" type="fixed">
+      <parent link="arm_base"/>
+      <child link="arm_inline"/>
+      <origin xyz="0.124 0.004 0"/>
+    </joint>
+
+    <link name="arm_connector">
+      <visual>
+        <geometry><cylinder radius="0.020" length="0.033"/></geometry>
+        <origin xyz="0 0 0.0165"/>
+        <material name="arm_orange"><color rgba="0.9 0.5 0.1 1.0"/></material>
+      </visual>
+      <inertial><mass value="0.194"/>
+        <origin xyz="0 0 0.0165"/>
+        <inertia ixx="0.000037" ixy="0" ixz="0" iyy="0.000037" iyz="0" izz="0.0000388"/>
+      </inertial>
+    </link>
+    <joint name="axis_e" type="revolute">
+      <parent link="arm_inline"/>
+      <child link="arm_connector"/>
+      <origin xyz="0 0 0.014"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="0.0" upper="6.10" effort="9.0" velocity="0.5"/>
+    </joint>
+
+    <link name="arm_upper">
+      <visual>
+        <geometry><cylinder radius="0.020" length="0.145"/></geometry>
+        <origin xyz="-0.02 0 -0.0725"/>
+        <material name="arm_orange"/>
+      </visual>
+      <inertial><mass value="0.429"/>
+        <origin xyz="-0.02 0 -0.0725"/>
+        <inertia ixx="0.0008907" ixy="0" ixz="0" iyy="0.0008907" iyz="0" izz="0.0000858"/>
+      </inertial>
+    </link>
+    <joint name="axis_d" type="revolute">
+      <parent link="arm_connector"/>
+      <child link="arm_upper"/>
+      <origin xyz="-0.02 0 0.033"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-3.49" upper="3.49" effort="9.0" velocity="0.5"/>
+    </joint>
+
+    <link name="arm_elbow">
+      <visual>
+        <geometry><cylinder radius="0.020" length="0.033"/></geometry>
+        <origin xyz="0.02 0 0.0165"/>
+        <material name="arm_orange"/>
+      </visual>
+      <inertial><mass value="0.115"/>
+        <origin xyz="0.02 0 0.0165"/>
+        <inertia ixx="0.0000219" ixy="0" ixz="0" iyy="0.0000219" iyz="0" izz="0.000023"/>
+      </inertial>
+    </link>
+    <joint name="axis_c" type="revolute">
+      <parent link="arm_upper"/>
+      <child link="arm_elbow"/>
+      <origin xyz="-0.04 0 -0.1453" rpy="0 0 3.14159"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0.0" upper="3.22" effort="9.0" velocity="0.5"/>
+    </joint>
+
+    <link name="arm_wrist">
+      <visual>
+        <geometry><cylinder radius="0.020" length="0.100"/></geometry>
+        <origin xyz="0 0 0.05"/>
+        <material name="arm_dark"/>
+      </visual>
+      <inertial><mass value="0.200"/>
+        <origin xyz="0 0 0.05"/>
+        <inertia ixx="0.0001867" ixy="0" ixz="0" iyy="0.0001867" iyz="0" izz="0.00004"/>
+      </inertial>
+    </link>
+    <joint name="axis_b" type="revolute">
+      <parent link="arm_elbow"/>
+      <child link="arm_wrist"/>
+      <origin xyz="0.02 0 0.033" rpy="0 0 2.09439"/>
+      <axis xyz="0 0 -1"/>
+      <limit lower="0.0" upper="3.22" effort="9.0" velocity="0.5"/>
+    </joint>
+  </xacro:macro>
+</robot>

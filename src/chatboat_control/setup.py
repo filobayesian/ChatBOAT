@@ -18,7 +18,7 @@ setup(
     zip_safe=True,
     maintainer='chatboat',
     maintainer_email='todo@todo.com',
-    description='Control interfaces and test nodes for GIRONA500 UVMS',
+    description='Control interfaces and test nodes for BlueROV2 Heavy + Reach Alpha 5 UVMS',
     license='MIT',
     entry_points={
         'console_scripts': [

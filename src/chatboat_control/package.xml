@@ -3,7 +3,7 @@
 <package format="3">
   <name>chatboat_control</name>
   <version>0.1.0</version>
-  <description>Control interfaces and test nodes for GIRONA500 UVMS</description>
+  <description>Control interfaces and test nodes for BlueROV2 Heavy + Reach Alpha 5 UVMS</description>
   <maintainer email="todo@todo.com">chatboat</maintainer>
   <license>MIT</license>
 

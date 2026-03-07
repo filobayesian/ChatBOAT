@@ -28,6 +28,8 @@ class TestCommander(Node):
     Uses simple waypoint-based open-loop commands to demonstrate
     the ROS2 interface works. Phase 2 will replace this with
     MPC-based task-priority control.
+
+    Robot: BlueROV2 Heavy (8 thrusters) + Reach Alpha 5 (4-DOF arm)
     """
 
     # Target positions (NED frame)
@@ -36,28 +38,28 @@ class TestCommander(Node):
     CRUISE_DEPTH = 3.5
     APPROACH_DEPTH = 4.5
 
-    # Arm configurations (q1, q2, q3, q4)
+    # Arm configurations (axis_e, axis_d, axis_c, axis_b)
     ARM_STOWED = [0.0, 0.0, 0.0, 0.0]
-    ARM_REACH_DOWN = [0.0, 0.8, 0.6, 0.5]
+    ARM_REACH_DOWN = [0.0, 1.2, 1.0, 0.5]
 
     def __init__(self):
         super().__init__('test_commander')
 
         # Publishers
         self._thruster_pub = self.create_publisher(
-            Float64MultiArray, '/girona500/thruster_commands', 10)
+            Float64MultiArray, '/chatboat/thruster_commands', 10)
         self._joint_pub = self.create_publisher(
-            JointState, '/girona500/joint_commands', 10)
+            JointState, '/chatboat/joint_commands', 10)
 
         # Subscribers
         self._odom_sub = self.create_subscription(
-            Odometry, '/girona500/odometry', self._odom_cb, 10)
+            Odometry, '/chatboat/odometry', self._odom_cb, 10)
         self._joint_sub = self.create_subscription(
-            JointState, '/girona500/joint_states', self._joint_state_cb, 10)
+            JointState, '/chatboat/joint_states', self._joint_state_cb, 10)
 
         # Gripper service client
         self._gripper_client = self.create_client(
-            SetBool, '/girona500/gripper/activate')
+            SetBool, '/chatboat/gripper/activate')
 
         # State
         self._state = State.INIT
@@ -79,20 +81,37 @@ class TestCommander(Node):
             self._joint_positions = list(msg.position[:4])
 
     def _send_thruster(self, surge=0.0, sway=0.0, heave=0.0, yaw=0.0):
+        """BlueROV2 Heavy vectored 8-thruster mixing.
+
+        Horizontal thrusters at +/-45 deg angles:
+          T1 FrontRight  (inverted)
+          T2 FrontLeft   (inverted)
+          T3 BackRight
+          T4 BackLeft
+        Vertical thrusters:
+          T5 DiveFrontRight
+          T6 DiveFrontLeft  (inverted)
+          T7 DiveBackRight  (inverted)
+          T8 DiveBackLeft
+        """
         msg = Float64MultiArray()
-        t1 = surge - yaw  # surge port
-        t2 = surge + yaw  # surge stbd
-        t3 = sway
-        t4 = heave
-        t5 = heave
+        # Horizontal thrusters at +-45 deg angles
+        t1 = surge + sway + yaw    # FrontRight
+        t2 = surge - sway - yaw    # FrontLeft
+        t3 = -surge + sway - yaw   # BackRight
+        t4 = -surge - sway + yaw   # BackLeft
+        # Vertical thrusters (equal for pure heave)
+        t5 = heave                 # DiveFrontRight
+        t6 = heave                 # DiveFrontLeft
+        t7 = heave                 # DiveBackRight
+        t8 = heave                 # DiveBackLeft
         # Clamp to [-1, 1]
-        msg.data = [max(-1.0, min(1.0, t)) for t in [t1, t2, t3, t4, t5]]
+        msg.data = [max(-1.0, min(1.0, t)) for t in [t1, t2, t3, t4, t5, t6, t7, t8]]
         self._thruster_pub.publish(msg)
 
     def _send_arm(self, positions):
         msg = JointState()
-        msg.name = ['q1_shoulder_yaw', 'q2_shoulder_pitch',
-                     'q3_elbow_pitch', 'q4_wrist_pitch']
+        msg.name = ['axis_e', 'axis_d', 'axis_c', 'axis_b']
         msg.position = [float(p) for p in positions]
         self._joint_pub.publish(msg)
 

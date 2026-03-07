@@ -3,7 +3,7 @@
 <package format="3">
   <name>chatboat_description</name>
   <version>0.1.0</version>
-  <description>URDF/xacro description for GIRONA500 UVMS (vehicle + ECA 5E arm + gripper)</description>
+  <description>URDF/xacro description for BlueROV2 Heavy UVMS (vehicle + Reach Alpha 5 arm + gripper)</description>
   <maintainer email="todo@todo.com">chatboat</maintainer>
   <license>MIT</license>
 

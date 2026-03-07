@@ -17,10 +17,10 @@ class GripperService(Node):
         self._active = False
 
         self._srv = self.create_service(
-            SetBool, '/girona500/gripper/activate', self._handle_gripper)
+            SetBool, '/chatboat/gripper/activate', self._handle_gripper)
 
         self._state_pub = self.create_publisher(
-            Bool, '/girona500/gripper/state', 10)
+            Bool, '/chatboat/gripper/state', 10)
 
         self._timer = self.create_timer(0.1, self._publish_state)
 

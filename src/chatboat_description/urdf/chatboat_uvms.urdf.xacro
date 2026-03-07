@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="chatboat_uvms">
 
-  <!-- Composite UVMS: GIRONA500 + ECA 5E + Gripper -->
+  <!-- Composite UVMS: BlueROV2 Heavy + Reach Alpha 5 + Gripper -->
 
-  <xacro:include filename="$(find chatboat_description)/urdf/girona500.urdf.xacro"/>
-  <xacro:include filename="$(find chatboat_description)/urdf/eca5e.urdf.xacro"/>
+  <xacro:include filename="$(find chatboat_description)/urdf/bluerov2.urdf.xacro"/>
+  <xacro:include filename="$(find chatboat_description)/urdf/alpha5.urdf.xacro"/>
   <xacro:include filename="$(find chatboat_description)/urdf/gripper.urdf.xacro"/>
 
-  <xacro:arg name="namespace" default="girona500"/>
+  <xacro:arg name="namespace" default="chatboat"/>
 
   <!-- World frame (NED) -->
   <link name="world"/>
@@ -17,12 +17,12 @@
   </joint>
 
   <!-- Instantiate vehicle -->
-  <xacro:girona500 namespace="$(arg namespace)"/>
+  <xacro:bluerov2 namespace="$(arg namespace)"/>
 
-  <!-- Instantiate arm (mounted at front-bottom of vehicle) -->
-  <xacro:eca5e parent="$(arg namespace)/base_link" namespace="$(arg namespace)"/>
+  <!-- Instantiate arm (mounted at front of vehicle) -->
+  <xacro:alpha5 parent="$(arg namespace)/base_link" namespace="$(arg namespace)"/>
 
   <!-- Instantiate gripper (at end of arm) -->
-  <xacro:gripper parent="arm_link4"/>
+  <xacro:gripper parent="arm_wrist"/>
 
 </robot>

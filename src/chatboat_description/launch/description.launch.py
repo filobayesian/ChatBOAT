@@ -12,7 +12,7 @@ def generate_launch_description():
     xacro_file = os.path.join(pkg_description, 'urdf', 'chatboat_uvms.urdf.xacro')
 
     namespace_arg = DeclareLaunchArgument(
-        'namespace', default_value='girona500',
+        'namespace', default_value='chatboat',
         description='Robot namespace'
     )
 
@@ -29,7 +29,7 @@ def generate_launch_description():
     joint_state_publisher = Node(
         package='joint_state_publisher',
         executable='joint_state_publisher',
-        parameters=[{'source_list': ['/girona500/joint_states']}],
+        parameters=[{'source_list': ['/chatboat/joint_states']}],
         output='screen',
     )
 

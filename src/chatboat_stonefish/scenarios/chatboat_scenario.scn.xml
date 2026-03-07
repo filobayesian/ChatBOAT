@@ -1,4 +1,8 @@
 <?xml version="1.0"?>
+<!--
+  ChatBOAT UVMS Scenario: BlueROV2 Heavy + Reach Alpha 5 arm + magnetic gripper
+  Stonefish simulator scenario file
+-->
 <scenario>
   <environment>
     <ned latitude="41.7" longitude="2.8"/>
@@ -13,31 +17,47 @@
   </environment>
 
   <materials>
-    <material name="Aluminium" density="2710" restitution="0.5"/>
-    <material name="Foam" density="200" restitution="0.3"/>
-    <material name="Sand" density="2650" restitution="0.2"/>
-    <material name="Ferromagnetic" density="7800" restitution="0.4"/>
-    <material name="PermanentMagnet" density="7500" restitution="0.4"/>
-    <material name="Neutral" density="1000" restitution="0.5"/>
+    <material name="Neutral" density="1000.0" restitution="0.5"/>
+    <material name="Rock" density="3000.0" restitution="0.8"/>
+    <material name="Fiberglass" density="1500.0" restitution="0.3"/>
+    <material name="Aluminium" density="2710.0" restitution="0.5"/>
+    <material name="Steel" density="7800.0" restitution="0.4"/>
+    <material name="Sand" density="2650.0" restitution="0.2"/>
+    <material name="Ferromagnetic" density="7800.0" restitution="0.4"/>
+    <material name="PermanentMagnet" density="7500.0" restitution="0.4"/>
+    <friction_table>
+      <friction material1="Neutral" material2="Neutral" static="0.5" dynamic="0.2"/>
+      <friction material1="Neutral" material2="Rock" static="0.2" dynamic="0.1"/>
+      <friction material1="Neutral" material2="Fiberglass" static="0.5" dynamic="0.2"/>
+      <friction material1="Neutral" material2="Aluminium" static="0.1" dynamic="0.02"/>
+      <friction material1="Neutral" material2="Steel" static="0.3" dynamic="0.1"/>
+      <friction material1="Neutral" material2="Ferromagnetic" static="0.3" dynamic="0.1"/>
+      <friction material1="Rock" material2="Rock" static="0.9" dynamic="0.7"/>
+      <friction material1="Fiberglass" material2="Fiberglass" static="0.5" dynamic="0.2"/>
+      <friction material1="Aluminium" material2="Aluminium" static="0.8" dynamic="0.5"/>
+    </friction_table>
   </materials>
 
   <looks>
     <look name="seabed" gray="0.6" roughness="0.9"/>
-    <look name="red" gray="0.5" roughness="0.5" color="1.0 0.1 0.1"/>
-    <look name="green" gray="0.5" roughness="0.5" color="0.1 0.8 0.1"/>
-    <look name="yellow" gray="0.5" roughness="0.3" color="0.9 0.8 0.2"/>
-    <look name="grey" gray="0.5" roughness="0.5" color="0.6 0.6 0.65"/>
-    <look name="black" gray="0.3" roughness="0.5" color="0.2 0.2 0.2"/>
-    <look name="orange" gray="0.5" roughness="0.5" color="0.9 0.5 0.1"/>
-    <look name="white" gray="0.8" roughness="0.3" color="0.9 0.9 0.9"/>
+    <look name="br2" gray="1.0" roughness="0.4" metalness="0.5" texture="bluerov2/br2.png"/>
+    <look name="black" gray="0.05" roughness="0.2"/>
+    <look name="blue" rgb="0.0 0.5 1.0" roughness="0.3"/>
+    <look name="red" gray="0.5" roughness="0.5" rgb="1.0 0.1 0.1"/>
+    <look name="green" gray="0.5" roughness="0.5" rgb="0.1 0.8 0.1"/>
+    <look name="arm_dark" gray="0.3" roughness="0.5" rgb="0.25 0.25 0.25"/>
+    <look name="arm_orange" gray="0.5" roughness="0.5" rgb="0.9 0.5 0.1"/>
+    <look name="None" gray="0.0" roughness="0.0"/>
   </looks>
 
+  <!-- Seafloor at 5m depth -->
   <static name="seafloor" type="plane">
     <material name="Sand"/>
     <look name="seabed"/>
     <world_transform xyz="0.0 0.0 5.0" rpy="0.0 0.0 0.0"/>
   </static>
 
+  <!-- Manipulation targets -->
   <dynamic name="cube_a" type="box">
     <dimensions xyz="0.1 0.1 0.1"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
@@ -56,120 +76,222 @@
     <world_transform xyz="2.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
   </dynamic>
 
-  <robot name="girona500" fixed="false" self_collisions="false">
-    <base_link name="base_link" type="compound">
-      <external_part name="hull_upper_port" type="cylinder" physics="submerged" buoyant="true">
-        <dimensions radius="0.15" height="1.5"/>
-        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-        <material name="Foam"/>
-        <mass value="15.0"/>
-        <look name="yellow"/>
-        <compound_transform rpy="0.0 1.5708 0.0" xyz="0.0 -0.22 -0.12"/>
+  <!-- ================================================================== -->
+  <!-- ROBOT: BlueROV2 Heavy + Reach Alpha 5 + Magnetic Gripper           -->
+  <!-- ================================================================== -->
+  <robot name="chatboat" fixed="false" self_collisions="false">
+
+    <!-- ============================================================== -->
+    <!-- VEHICLE BODY: BlueROV2 Heavy compound hull                     -->
+    <!-- ============================================================== -->
+    <base_link name="base_link" type="compound" physics="submerged">
+      <!-- Main hull (visual: detailed mesh, physical: simplified mesh) -->
+      <external_part name="HullBottom" type="model" physics="submerged" buoyant="false">
+        <physical>
+          <mesh filename="bluerov2/bluerov2_phy.obj" scale="1.0"/>
+          <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+          <thickness value="0.005"/>
+        </physical>
+        <visual>
+          <mesh filename="bluerov2/bluerov2.obj" scale="1.0"/>
+          <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+        </visual>
+        <material name="Fiberglass"/>
+        <look name="br2"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
       </external_part>
-      <external_part name="hull_upper_stbd" type="cylinder" physics="submerged" buoyant="true">
-        <dimensions radius="0.15" height="1.5"/>
-        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-        <material name="Foam"/>
-        <mass value="15.0"/>
-        <look name="yellow"/>
-        <compound_transform rpy="0.0 1.5708 0.0" xyz="0.0 0.22 -0.12"/>
+
+      <!-- Wings/frame (visual: detailed, physical: simplified ring) -->
+      <external_part name="HeavyFit" type="model" physics="submerged" buoyant="false">
+        <physical>
+          <mesh filename="bluerov2/bluerov2_ring.obj" scale="1.0"/>
+          <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.03"/>
+          <thickness value="0.005"/>
+        </physical>
+        <visual>
+          <mesh filename="bluerov2/bluerov2_wings.obj" scale="1.0"/>
+          <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+        </visual>
+        <material name="Fiberglass"/>
+        <look name="black"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
       </external_part>
-      <external_part name="hull_lower" type="cylinder" physics="submerged" buoyant="true">
-        <dimensions radius="0.15" height="1.5"/>
-        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-        <material name="Aluminium"/>
-        <mass value="110.0"/>
-        <look name="grey"/>
-        <compound_transform rpy="0.0 1.5708 0.0" xyz="0.0 0.0 0.17"/>
-      </external_part>
+
+      <!-- Buoyancy boxes (4 corners) -->
+      <internal_part name="BackLeft" type="box" physics="submerged" buoyant="true">
+        <dimensions xyz="0.2 0.15 0.091"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <material name="Neutral"/>
+        <look name="None"/>
+        <mass value="0.025"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.1 -0.1 0.0"/>
+      </internal_part>
+      <internal_part name="BackRight" type="box" physics="submerged" buoyant="true">
+        <dimensions xyz="0.2 0.15 0.091"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <material name="Neutral"/>
+        <look name="None"/>
+        <mass value="0.025"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.1 0.1 0.0"/>
+      </internal_part>
+      <internal_part name="FrontLeft" type="box" physics="submerged" buoyant="true">
+        <dimensions xyz="0.2 0.15 0.091"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <material name="Neutral"/>
+        <look name="None"/>
+        <mass value="0.025"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 -0.1 0.0"/>
+      </internal_part>
+      <internal_part name="FrontRight" type="box" physics="submerged" buoyant="true">
+        <dimensions xyz="0.2 0.15 0.091"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <material name="Neutral"/>
+        <look name="None"/>
+        <mass value="0.025"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 0.1 0.0"/>
+      </internal_part>
+
+      <!-- Ballast weights (tuned for neutral buoyancy + arm weight compensation) -->
+      <internal_part name="WeightCenter" type="sphere" physics="submerged" buoyant="false">
+        <dimensions radius="0.01"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <material name="Steel"/>
+        <look name="black"/>
+        <mass value="1.5"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.05 0.0 0.1"/>
+      </internal_part>
+      <internal_part name="WeightLeft" type="sphere" physics="submerged" buoyant="false">
+        <dimensions radius="0.01"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <material name="Steel"/>
+        <look name="black"/>
+        <mass value="1.0"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 -0.075 0.1"/>
+      </internal_part>
+      <internal_part name="WeightRight" type="sphere" physics="submerged" buoyant="false">
+        <dimensions radius="0.01"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <material name="Steel"/>
+        <look name="black"/>
+        <mass value="1.0"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.075 0.1"/>
+      </internal_part>
     </base_link>
 
+    <!-- ============================================================== -->
+    <!-- MANIPULATOR ARM: Reach Alpha 5 (4 revolute DOF + gripper)      -->
+    <!-- Kinematic chain translated from reach_description URDF         -->
+    <!-- Using cylinder primitives; upgrade to OBJ meshes via           -->
+    <!--   scripts/convert_dae_to_obj.py                                -->
+    <!-- ============================================================== -->
+
+    <!-- Arm base adapter (URDF: base_link, RS1-1010) -->
     <link name="arm_base" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.04" height="0.05"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <dimensions radius="0.020" height="0.130"/>
+      <origin xyz="-0.055 0.0 0.0" rpy="0.0 1.5708 0.0"/>
       <material name="Aluminium"/>
-      <mass value="0.5"/>
-      <look name="black"/>
+      <mass value="0.234"/>
+      <look name="arm_dark"/>
     </link>
     <joint name="arm_base_joint" type="fixed">
       <parent name="base_link"/>
       <child name="arm_base"/>
-      <origin xyz="0.75 0.0 0.15" rpy="0.0 0.0 0.0"/>
+      <origin xyz="0.18 0.0 0.08" rpy="0.0 0.0 0.0"/>
     </joint>
 
-    <link name="arm_link1" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.10"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <!-- Inline actuator (URDF: m3_inline_link, M3-INLINE) -->
+    <link name="arm_inline" type="cylinder" physics="submerged" buoyant="true">
+      <dimensions radius="0.020" height="0.150"/>
+      <origin xyz="-0.055 0.0 0.0" rpy="0.0 1.5708 0.0"/>
       <material name="Aluminium"/>
-      <mass value="0.4"/>
-      <look name="black"/>
+      <mass value="0.341"/>
+      <look name="arm_dark"/>
     </link>
-    <joint name="q1_shoulder_yaw" type="revolute">
+    <joint name="arm_inline_joint" type="fixed">
       <parent name="arm_base"/>
-      <child name="arm_link1"/>
-      <origin xyz="0.0 0.0 0.05" rpy="0.0 0.0 0.0"/>
+      <child name="arm_inline"/>
+      <origin xyz="0.124 0.004 0.0" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+    <!-- Joint E connector (URDF: m2_1_1_link, M2-1-1) -->
+    <link name="arm_connector" type="cylinder" physics="submerged" buoyant="true">
+      <dimensions radius="0.020" height="0.033"/>
+      <origin xyz="0.0 0.0 0.0165" rpy="0.0 0.0 0.0"/>
+      <material name="Aluminium"/>
+      <mass value="0.194"/>
+      <look name="arm_orange"/>
+    </link>
+    <joint name="axis_e" type="revolute">
+      <parent name="arm_inline"/>
+      <child name="arm_connector"/>
+      <origin xyz="0.0 0.0 0.014" rpy="0.0 0.0 0.0"/>
       <axis xyz="0.0 0.0 1.0"/>
-      <limits min="-3.14" max="3.14"/>
+      <limits min="0.0" max="6.10"/>
     </joint>
 
-    <link name="arm_link2" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.030" height="0.20"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 1.5708 0.0"/>
+    <!-- Main arm segment (URDF: m2_link, M2) — longest link -->
+    <link name="arm_upper" type="cylinder" physics="submerged" buoyant="true">
+      <dimensions radius="0.020" height="0.145"/>
+      <origin xyz="-0.02 0.0 -0.0725" rpy="0.0 0.0 0.0"/>
       <material name="Aluminium"/>
-      <mass value="0.6"/>
-      <look name="orange"/>
+      <mass value="0.429"/>
+      <look name="arm_orange"/>
     </link>
-    <joint name="q2_shoulder_pitch" type="revolute">
-      <parent name="arm_link1"/>
-      <child name="arm_link2"/>
-      <origin xyz="0.0 0.0 0.10" rpy="0.0 0.0 0.0"/>
+    <joint name="axis_d" type="revolute">
+      <parent name="arm_connector"/>
+      <child name="arm_upper"/>
+      <origin xyz="-0.02 0.0 0.033" rpy="0.0 0.0 0.0"/>
       <axis xyz="0.0 1.0 0.0"/>
-      <limits min="-1.57" max="1.57"/>
+      <limits min="-3.49" max="3.49"/>
     </joint>
 
-    <link name="arm_link3" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.025" height="0.20"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 1.5708 0.0"/>
+    <!-- Elbow connector (URDF: m2_1_3_link, M2-1-3) -->
+    <link name="arm_elbow" type="cylinder" physics="submerged" buoyant="true">
+      <dimensions radius="0.020" height="0.033"/>
+      <origin xyz="0.02 0.0 0.0165" rpy="0.0 0.0 0.0"/>
       <material name="Aluminium"/>
-      <mass value="0.5"/>
-      <look name="orange"/>
+      <mass value="0.115"/>
+      <look name="arm_orange"/>
     </link>
-    <joint name="q3_elbow_pitch" type="revolute">
-      <parent name="arm_link2"/>
-      <child name="arm_link3"/>
-      <origin xyz="0.20 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <joint name="axis_c" type="revolute">
+      <parent name="arm_upper"/>
+      <child name="arm_elbow"/>
+      <origin xyz="-0.04 0.0 -0.1453" rpy="0.0 0.0 3.14159"/>
       <axis xyz="0.0 1.0 0.0"/>
-      <limits min="-2.36" max="2.36"/>
+      <limits min="0.0" max="3.22"/>
     </joint>
 
-    <link name="arm_link4" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.025" height="0.10"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 1.5708 0.0"/>
+    <!-- Wrist (URDF: m1_link, M1) -->
+    <link name="arm_wrist" type="cylinder" physics="submerged" buoyant="true">
+      <dimensions radius="0.020" height="0.100"/>
+      <origin xyz="0.0 0.0 0.05" rpy="0.0 0.0 0.0"/>
       <material name="Aluminium"/>
-      <mass value="0.3"/>
-      <look name="black"/>
+      <mass value="0.200"/>
+      <look name="arm_dark"/>
     </link>
-    <joint name="q4_wrist_pitch" type="revolute">
-      <parent name="arm_link3"/>
-      <child name="arm_link4"/>
-      <origin xyz="0.20 0.0 0.0" rpy="0.0 0.0 0.0"/>
-      <axis xyz="0.0 1.0 0.0"/>
-      <limits min="-2.36" max="2.36"/>
+    <joint name="axis_b" type="revolute">
+      <parent name="arm_elbow"/>
+      <child name="arm_wrist"/>
+      <origin xyz="0.02 0.0 0.033" rpy="0.0 0.0 2.09439"/>
+      <axis xyz="0.0 0.0 -1.0"/>
+      <limits min="0.0" max="3.22"/>
     </joint>
 
+    <!-- Magnetic gripper tip (replaces Reach Alpha 5 jaws) -->
     <link name="gripper_tip" type="sphere" physics="submerged" buoyant="true">
-      <dimensions radius="0.03"/>
+      <dimensions radius="0.025"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
       <material name="PermanentMagnet"/>
-      <mass value="0.2"/>
+      <mass value="0.15"/>
       <look name="red"/>
     </link>
-    <joint name="gripper_tip_joint" type="fixed">
-      <parent name="arm_link4"/>
+    <joint name="gripper_joint" type="fixed">
+      <parent name="arm_wrist"/>
       <child name="gripper_tip"/>
-      <origin xyz="0.10 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <origin xyz="0.0 0.0 0.14" rpy="0.0 0.0 0.0"/>
     </joint>
 
+    <!-- End-effector control frame -->
     <link name="ee_frame" type="sphere" physics="surface" buoyant="false">
       <dimensions radius="0.005"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
@@ -180,193 +302,207 @@
     <joint name="ee_frame_joint" type="fixed">
       <parent name="gripper_tip"/>
       <child name="ee_frame"/>
-      <origin xyz="0.03 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <origin xyz="0.0 0.0 0.025" rpy="0.0 0.0 0.0"/>
     </joint>
 
-    <actuator name="thruster_surge_port" type="thruster">
+    <!-- ============================================================== -->
+    <!-- THRUSTERS: BlueROV2 Heavy vectored 6-DOF (8 thrusters)         -->
+    <!-- ============================================================== -->
+
+    <!-- Horizontal thrusters (surge/sway/yaw) -->
+    <actuator name="ThrusterFR" type="thruster">
       <link name="base_link"/>
-      <origin xyz="-0.75 -0.30 0.0" rpy="0.0 0.0 0.0"/>
-      <specs max_setpoint="1000.0" inverted="false"/>
-      <propeller diameter="0.08" right="true">
-        <mesh filename="propeller.obj" scale="1.0"/>
+      <origin xyz="0.1355 0.1 0.0725" rpy="0.0 0.0 -0.7854"/>
+      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="true"/>
+      <propeller diameter="0.076" right="true">
+        <mesh filename="bluerov2/ccw.obj" scale="1.0"/>
         <material name="Neutral"/>
-        <look name="white"/>
+        <look name="blue"/>
       </propeller>
-      <rotor_dynamics type="first_order">
-        <time_constant value="0.1"/>
-      </rotor_dynamics>
-      <thrust_model type="quadratic">
-        <thrust_coeff value="0.4472"/>
-      </thrust_model>
+    </actuator>
+    <actuator name="ThrusterFL" type="thruster">
+      <link name="base_link"/>
+      <origin xyz="0.1355 -0.1 0.0725" rpy="0.0 0.0 0.7854"/>
+      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="true"/>
+      <propeller diameter="0.076" right="true">
+        <mesh filename="bluerov2/ccw.obj" scale="1.0"/>
+        <material name="Neutral"/>
+        <look name="blue"/>
+      </propeller>
+    </actuator>
+    <actuator name="ThrusterBR" type="thruster">
+      <link name="base_link"/>
+      <origin xyz="-0.1475 0.1 0.0725" rpy="0.0 0.0 -2.3562"/>
+      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="false"/>
+      <propeller diameter="0.076" right="false">
+        <mesh filename="bluerov2/cw.obj" scale="1.0"/>
+        <material name="Neutral"/>
+        <look name="blue"/>
+      </propeller>
+    </actuator>
+    <actuator name="ThrusterBL" type="thruster">
+      <link name="base_link"/>
+      <origin xyz="-0.1475 -0.1 0.0725" rpy="0.0 0.0 2.3562"/>
+      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="false"/>
+      <propeller diameter="0.076" right="false">
+        <mesh filename="bluerov2/cw.obj" scale="1.0"/>
+        <material name="Neutral"/>
+        <look name="blue"/>
+      </propeller>
     </actuator>
 
-    <actuator name="thruster_surge_stbd" type="thruster">
+    <!-- Vertical thrusters (heave/roll/pitch) -->
+    <actuator name="ThrusterDFR" type="thruster">
       <link name="base_link"/>
-      <origin xyz="-0.75 0.30 0.0" rpy="0.0 0.0 0.0"/>
-      <specs max_setpoint="1000.0" inverted="false"/>
-      <propeller diameter="0.08" right="true">
-        <mesh filename="propeller.obj" scale="1.0"/>
+      <origin xyz="0.12 0.218 0.0" rpy="0.0 -1.5708 0.0"/>
+      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="false"/>
+      <propeller diameter="0.076" right="true">
+        <mesh filename="bluerov2/cw.obj" scale="1.0"/>
         <material name="Neutral"/>
-        <look name="white"/>
+        <look name="blue"/>
       </propeller>
-      <rotor_dynamics type="first_order">
-        <time_constant value="0.1"/>
-      </rotor_dynamics>
-      <thrust_model type="quadratic">
-        <thrust_coeff value="0.4472"/>
-      </thrust_model>
+    </actuator>
+    <actuator name="ThrusterDFL" type="thruster">
+      <link name="base_link"/>
+      <origin xyz="0.12 -0.218 0.0" rpy="0.0 -1.5708 0.0"/>
+      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="true"/>
+      <propeller diameter="0.076" right="false">
+        <mesh filename="bluerov2/ccw.obj" scale="1.0"/>
+        <material name="Neutral"/>
+        <look name="blue"/>
+      </propeller>
+    </actuator>
+    <actuator name="ThrusterDBR" type="thruster">
+      <link name="base_link"/>
+      <origin xyz="-0.12 0.218 0.0" rpy="0.0 -1.5708 0.0"/>
+      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="true"/>
+      <propeller diameter="0.076" right="false">
+        <mesh filename="bluerov2/ccw.obj" scale="1.0"/>
+        <material name="Neutral"/>
+        <look name="blue"/>
+      </propeller>
+    </actuator>
+    <actuator name="ThrusterDBL" type="thruster">
+      <link name="base_link"/>
+      <origin xyz="-0.12 -0.218 0.0" rpy="0.0 -1.5708 0.0"/>
+      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="false"/>
+      <propeller diameter="0.076" right="true">
+        <mesh filename="bluerov2/cw.obj" scale="1.0"/>
+        <material name="Neutral"/>
+        <look name="blue"/>
+      </propeller>
     </actuator>
 
-    <actuator name="thruster_sway" type="thruster">
-      <link name="base_link"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 1.5708"/>
-      <specs max_setpoint="1000.0" inverted="false"/>
-      <propeller diameter="0.08" right="true">
-        <mesh filename="propeller.obj" scale="1.0"/>
-        <material name="Neutral"/>
-        <look name="white"/>
-      </propeller>
-      <rotor_dynamics type="first_order">
-        <time_constant value="0.1"/>
-      </rotor_dynamics>
-      <thrust_model type="quadratic">
-        <thrust_coeff value="0.4472"/>
-      </thrust_model>
+    <!-- ============================================================== -->
+    <!-- ARM SERVO ACTUATORS                                            -->
+    <!-- ============================================================== -->
+    <actuator name="servo_e" type="servo">
+      <joint name="axis_e"/>
+      <controller position_gain="40.0" velocity_gain="10.0" max_torque="9.0"/>
+    </actuator>
+    <actuator name="servo_d" type="servo">
+      <joint name="axis_d"/>
+      <controller position_gain="40.0" velocity_gain="10.0" max_torque="9.0"/>
+    </actuator>
+    <actuator name="servo_c" type="servo">
+      <joint name="axis_c"/>
+      <controller position_gain="40.0" velocity_gain="10.0" max_torque="9.0"/>
+    </actuator>
+    <actuator name="servo_b" type="servo">
+      <joint name="axis_b"/>
+      <controller position_gain="40.0" velocity_gain="10.0" max_torque="9.0"/>
     </actuator>
 
-    <actuator name="thruster_heave_port" type="thruster">
-      <link name="base_link"/>
-      <origin xyz="0.0 -0.30 0.0" rpy="0.0 -1.5708 0.0"/>
-      <specs max_setpoint="1000.0" inverted="false"/>
-      <propeller diameter="0.08" right="true">
-        <mesh filename="propeller.obj" scale="1.0"/>
-        <material name="Neutral"/>
-        <look name="white"/>
-      </propeller>
-      <rotor_dynamics type="first_order">
-        <time_constant value="0.1"/>
-      </rotor_dynamics>
-      <thrust_model type="quadratic">
-        <thrust_coeff value="0.4472"/>
-      </thrust_model>
-    </actuator>
+    <!-- ============================================================== -->
+    <!-- SENSORS                                                        -->
+    <!-- ============================================================== -->
 
-    <actuator name="thruster_heave_stbd" type="thruster">
+    <!-- Navigation sensors on vehicle body -->
+    <sensor name="odometry" type="odometry" rate="50.0">
       <link name="base_link"/>
-      <origin xyz="0.0 0.30 0.0" rpy="0.0 -1.5708 0.0"/>
-      <specs max_setpoint="1000.0" inverted="false"/>
-      <propeller diameter="0.08" right="true">
-        <mesh filename="propeller.obj" scale="1.0"/>
-        <material name="Neutral"/>
-        <look name="white"/>
-      </propeller>
-      <rotor_dynamics type="first_order">
-        <time_constant value="0.1"/>
-      </rotor_dynamics>
-      <thrust_model type="quadratic">
-        <thrust_coeff value="0.4472"/>
-      </thrust_model>
-    </actuator>
-
-    <actuator name="servo_q1" type="servo">
-      <joint name="q1_shoulder_yaw"/>
-      <controller position_gain="1.0" velocity_gain="0.5" max_torque="20.0"/>
-    </actuator>
-    <actuator name="servo_q2" type="servo">
-      <joint name="q2_shoulder_pitch"/>
-      <controller position_gain="1.0" velocity_gain="0.5" max_torque="20.0"/>
-    </actuator>
-    <actuator name="servo_q3" type="servo">
-      <joint name="q3_elbow_pitch"/>
-      <controller position_gain="0.8" velocity_gain="0.4" max_torque="15.0"/>
-    </actuator>
-    <actuator name="servo_q4" type="servo">
-      <joint name="q4_wrist_pitch"/>
-      <controller position_gain="0.8" velocity_gain="0.4" max_torque="10.0"/>
-    </actuator>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <noise position="0.01" velocity="0.005" angle="0.005" angular_velocity="0.002"/>
+      <ros_publisher topic="/chatboat/odometry"/>
+    </sensor>
 
     <sensor name="imu" type="imu" rate="100.0">
       <link name="base_link"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
       <noise angle="0.01" angular_velocity="0.001" linear_acceleration="0.01"/>
-      <ros_publisher topic="/girona500/imu"/>
-    </sensor>
-
-    <sensor name="dvl" type="dvl" rate="10.0">
-      <link name="base_link"/>
-      <origin xyz="0.0 0.0 0.20" rpy="0.0 0.0 0.0"/>
-      <specs beam_angle="30.0"/>
-      <noise velocity="0.005" altitude="0.01"/>
-      <ros_publisher topic="/girona500/dvl"/>
+      <ros_publisher topic="/chatboat/imu"/>
     </sensor>
 
     <sensor name="pressure" type="pressure" rate="10.0">
       <link name="base_link"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
       <noise pressure="100.0"/>
-      <ros_publisher topic="/girona500/pressure"/>
+      <ros_publisher topic="/chatboat/pressure"/>
+    </sensor>
+
+    <sensor name="dvl" type="dvl" rate="10.0">
+      <link name="base_link"/>
+      <origin xyz="0.0 0.0 0.20" rpy="3.1416 0.0 0.0"/>
+      <specs beam_angle="30.0"/>
+      <range velocity="9.0 9.0 9.0" altitude_min="0.2" altitude_max="100.0"/>
+      <noise velocity="0.005" altitude="0.01"/>
+      <ros_publisher topic="/chatboat/dvl"/>
     </sensor>
 
     <sensor name="gps" type="gps" rate="1.0">
       <link name="base_link"/>
-      <origin xyz="0.0 0.0 -0.20" rpy="0.0 0.0 0.0"/>
+      <origin xyz="0.0 0.0 -0.15" rpy="0.0 0.0 0.0"/>
       <noise ned_position="0.5"/>
-      <ros_publisher topic="/girona500/gps"/>
+      <ros_publisher topic="/chatboat/gps"/>
     </sensor>
 
-    <sensor name="odometry" type="odometry" rate="50.0">
+    <!-- Forward camera -->
+    <sensor name="camera_front" type="camera" rate="15.0">
       <link name="base_link"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-      <noise position="0.01" velocity="0.005" angle="0.005" angular_velocity="0.002"/>
-      <ros_publisher topic="/girona500/odometry"/>
+      <origin xyz="0.16 0.0 0.0" rpy="1.5708 0.0 1.5708"/>
+      <specs resolution_x="640" resolution_y="480" horizontal_fov="70.0"/>
+      <ros_publisher topic="/chatboat/camera_front"/>
     </sensor>
 
+    <!-- Arm sensors -->
     <sensor name="ft_wrist" type="forcetorque" rate="100.0">
-      <joint name="q4_wrist_pitch"/>
+      <joint name="axis_b"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
       <noise force="0.1" torque="0.01"/>
-      <ros_publisher topic="/girona500/ft_wrist"/>
+      <ros_publisher topic="/chatboat/ft_wrist"/>
     </sensor>
 
     <sensor name="ee_camera" type="camera" rate="15.0">
       <link name="gripper_tip"/>
       <origin xyz="0.0 0.0 -0.02" rpy="0.0 1.5708 0.0"/>
       <specs resolution_x="640" resolution_y="480" horizontal_fov="70.0"/>
-      <ros_publisher topic="/girona500/ee_camera"/>
+      <ros_publisher topic="/chatboat/ee_camera"/>
     </sensor>
 
-    <sensor name="encoder_q1" type="encoder" rate="100.0">
-      <joint name="q1_shoulder_yaw"/>
-      <ros_publisher topic="/girona500/joint_states"/>
+    <!-- Joint encoders -->
+    <sensor name="encoder_e" type="encoder" rate="100.0">
+      <joint name="axis_e"/>
+      <ros_publisher topic="/chatboat/joint_states"/>
     </sensor>
-    <sensor name="encoder_q2" type="encoder" rate="100.0">
-      <joint name="q2_shoulder_pitch"/>
-      <ros_publisher topic="/girona500/joint_states"/>
+    <sensor name="encoder_d" type="encoder" rate="100.0">
+      <joint name="axis_d"/>
+      <ros_publisher topic="/chatboat/joint_states"/>
     </sensor>
-    <sensor name="encoder_q3" type="encoder" rate="100.0">
-      <joint name="q3_elbow_pitch"/>
-      <ros_publisher topic="/girona500/joint_states"/>
+    <sensor name="encoder_c" type="encoder" rate="100.0">
+      <joint name="axis_c"/>
+      <ros_publisher topic="/chatboat/joint_states"/>
     </sensor>
-    <sensor name="encoder_q4" type="encoder" rate="100.0">
-      <joint name="q4_wrist_pitch"/>
-      <ros_publisher topic="/girona500/joint_states"/>
+    <sensor name="encoder_b" type="encoder" rate="100.0">
+      <joint name="axis_b"/>
+      <ros_publisher topic="/chatboat/joint_states"/>
     </sensor>
 
-    <ros_subscriber topic="/girona500/thruster_commands" type="std_msgs/Float64MultiArray">
-      <actuator name="thruster_surge_port" index="0"/>
-      <actuator name="thruster_surge_stbd" index="1"/>
-      <actuator name="thruster_sway" index="2"/>
-      <actuator name="thruster_heave_port" index="3"/>
-      <actuator name="thruster_heave_stbd" index="4"/>
-    </ros_subscriber>
+    <!-- ============================================================== -->
+    <!-- ROS2 TOPIC WIRING                                              -->
+    <!-- ============================================================== -->
+    <ros_subscriber thrusters="/chatboat/thruster_commands"/>
+    <ros_subscriber servos="/chatboat/joint_commands"/>
 
-    <ros_subscriber topic="/girona500/joint_commands" type="sensor_msgs/JointState">
-      <actuator name="servo_q1"/>
-      <actuator name="servo_q2"/>
-      <actuator name="servo_q3"/>
-      <actuator name="servo_q4"/>
-    </ros_subscriber>
-
+    <!-- Initial position: 2m depth, centered -->
     <world_transform xyz="0.0 0.0 2.0" rpy="0.0 0.0 0.0"/>
   </robot>
 

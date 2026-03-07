@@ -34,7 +34,7 @@ Visualization Manager:
       Name: Odometry
       Enabled: true
       Topic:
-        Value: /girona500/odometry
+        Value: /chatboat/odometry
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
@@ -54,7 +54,7 @@ Visualization Manager:
       Name: EE Camera
       Enabled: true
       Topic:
-        Value: /girona500/ee_camera
+        Value: /chatboat/ee_camera
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last

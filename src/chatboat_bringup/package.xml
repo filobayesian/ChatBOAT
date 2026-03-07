@@ -3,7 +3,7 @@
 <package format="3">
   <name>chatboat_bringup</name>
   <version>0.1.0</version>
-  <description>Meta-launch package for GIRONA500 UVMS simulation</description>
+  <description>Meta-launch package for BlueROV2 Heavy + Reach Alpha 5 UVMS simulation</description>
   <maintainer email="todo@todo.com">chatboat</maintainer>
   <license>MIT</license>
 
