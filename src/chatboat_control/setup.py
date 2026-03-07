@@ -24,6 +24,7 @@ setup(
         'console_scripts': [
             'test_commander = chatboat_control.test_commander:main',
             'gripper_service = chatboat_control.gripper_service:main',
+            'arm_teleop = chatboat_control.arm_teleop:main',
         ],
     },
 )
