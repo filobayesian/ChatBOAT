@@ -313,84 +313,132 @@
     <actuator name="ThrusterFR" type="thruster">
       <link name="base_link"/>
       <origin xyz="0.1355 0.1 0.0725" rpy="0.0 0.0 -0.7854"/>
-      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="true"/>
+      <specs max_setpoint="1000.0" inverted="true"/>
       <propeller diameter="0.076" right="true">
         <mesh filename="bluerov2/ccw.obj" scale="1.0"/>
         <material name="Neutral"/>
         <look name="blue"/>
       </propeller>
+      <rotor_dynamics type="first_order">
+        <time_constant value="0.1"/>
+      </rotor_dynamics>
+      <thrust_model type="quadratic">
+        <thrust_coeff value="0.167"/>
+      </thrust_model>
     </actuator>
     <actuator name="ThrusterFL" type="thruster">
       <link name="base_link"/>
       <origin xyz="0.1355 -0.1 0.0725" rpy="0.0 0.0 0.7854"/>
-      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="true"/>
+      <specs max_setpoint="1000.0" inverted="true"/>
       <propeller diameter="0.076" right="true">
         <mesh filename="bluerov2/ccw.obj" scale="1.0"/>
         <material name="Neutral"/>
         <look name="blue"/>
       </propeller>
+      <rotor_dynamics type="first_order">
+        <time_constant value="0.1"/>
+      </rotor_dynamics>
+      <thrust_model type="quadratic">
+        <thrust_coeff value="0.167"/>
+      </thrust_model>
     </actuator>
     <actuator name="ThrusterBR" type="thruster">
       <link name="base_link"/>
       <origin xyz="-0.1475 0.1 0.0725" rpy="0.0 0.0 -2.3562"/>
-      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="false"/>
+      <specs max_setpoint="1000.0" inverted="false"/>
       <propeller diameter="0.076" right="false">
         <mesh filename="bluerov2/cw.obj" scale="1.0"/>
         <material name="Neutral"/>
         <look name="blue"/>
       </propeller>
+      <rotor_dynamics type="first_order">
+        <time_constant value="0.1"/>
+      </rotor_dynamics>
+      <thrust_model type="quadratic">
+        <thrust_coeff value="0.167"/>
+      </thrust_model>
     </actuator>
     <actuator name="ThrusterBL" type="thruster">
       <link name="base_link"/>
       <origin xyz="-0.1475 -0.1 0.0725" rpy="0.0 0.0 2.3562"/>
-      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="false"/>
+      <specs max_setpoint="1000.0" inverted="false"/>
       <propeller diameter="0.076" right="false">
         <mesh filename="bluerov2/cw.obj" scale="1.0"/>
         <material name="Neutral"/>
         <look name="blue"/>
       </propeller>
+      <rotor_dynamics type="first_order">
+        <time_constant value="0.1"/>
+      </rotor_dynamics>
+      <thrust_model type="quadratic">
+        <thrust_coeff value="0.167"/>
+      </thrust_model>
     </actuator>
 
     <!-- Vertical thrusters (heave/roll/pitch) -->
     <actuator name="ThrusterDFR" type="thruster">
       <link name="base_link"/>
       <origin xyz="0.12 0.218 0.0" rpy="0.0 -1.5708 0.0"/>
-      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="false"/>
+      <specs max_setpoint="1000.0" inverted="false"/>
       <propeller diameter="0.076" right="true">
         <mesh filename="bluerov2/cw.obj" scale="1.0"/>
         <material name="Neutral"/>
         <look name="blue"/>
       </propeller>
+      <rotor_dynamics type="first_order">
+        <time_constant value="0.1"/>
+      </rotor_dynamics>
+      <thrust_model type="quadratic">
+        <thrust_coeff value="0.167"/>
+      </thrust_model>
     </actuator>
     <actuator name="ThrusterDFL" type="thruster">
       <link name="base_link"/>
       <origin xyz="0.12 -0.218 0.0" rpy="0.0 -1.5708 0.0"/>
-      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="true"/>
+      <specs max_setpoint="1000.0" inverted="true"/>
       <propeller diameter="0.076" right="false">
         <mesh filename="bluerov2/ccw.obj" scale="1.0"/>
         <material name="Neutral"/>
         <look name="blue"/>
       </propeller>
+      <rotor_dynamics type="first_order">
+        <time_constant value="0.1"/>
+      </rotor_dynamics>
+      <thrust_model type="quadratic">
+        <thrust_coeff value="0.167"/>
+      </thrust_model>
     </actuator>
     <actuator name="ThrusterDBR" type="thruster">
       <link name="base_link"/>
       <origin xyz="-0.12 0.218 0.0" rpy="0.0 -1.5708 0.0"/>
-      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="true"/>
+      <specs max_setpoint="1000.0" inverted="true"/>
       <propeller diameter="0.076" right="false">
         <mesh filename="bluerov2/ccw.obj" scale="1.0"/>
         <material name="Neutral"/>
         <look name="blue"/>
       </propeller>
+      <rotor_dynamics type="first_order">
+        <time_constant value="0.1"/>
+      </rotor_dynamics>
+      <thrust_model type="quadratic">
+        <thrust_coeff value="0.167"/>
+      </thrust_model>
     </actuator>
     <actuator name="ThrusterDBL" type="thruster">
       <link name="base_link"/>
       <origin xyz="-0.12 -0.218 0.0" rpy="0.0 -1.5708 0.0"/>
-      <specs thrust_coeff="0.167" torque_coeff="0.016" max_rpm="3600.0" inverted="false"/>
+      <specs max_setpoint="1000.0" inverted="false"/>
       <propeller diameter="0.076" right="true">
         <mesh filename="bluerov2/cw.obj" scale="1.0"/>
         <material name="Neutral"/>
         <look name="blue"/>
       </propeller>
+      <rotor_dynamics type="first_order">
+        <time_constant value="0.1"/>
+      </rotor_dynamics>
+      <thrust_model type="quadratic">
+        <thrust_coeff value="0.167"/>
+      </thrust_model>
     </actuator>
 
     <!-- ============================================================== -->
