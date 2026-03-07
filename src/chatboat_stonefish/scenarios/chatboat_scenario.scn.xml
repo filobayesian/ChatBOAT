@@ -45,8 +45,8 @@
     <look name="blue" rgb="0.0 0.5 1.0" roughness="0.3"/>
     <look name="red" gray="0.5" roughness="0.5" rgb="1.0 0.1 0.1"/>
     <look name="green" gray="0.5" roughness="0.5" rgb="0.1 0.8 0.1"/>
-    <look name="arm_dark" gray="0.5" roughness="0.4" rgb="0.4 0.4 0.4"/>
-    <look name="arm_orange" gray="0.5" roughness="0.5" rgb="0.9 0.5 0.1"/>
+    <look name="arm_dark" gray="0.8" roughness="0.3" rgb="1.0 1.0 0.0"/>
+    <look name="arm_orange" gray="0.8" roughness="0.3" rgb="1.0 0.4 0.0"/>
     <look name="None" gray="0.0" roughness="0.0"/>
   </looks>
 
