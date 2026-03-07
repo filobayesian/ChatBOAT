@@ -35,15 +35,12 @@ def generate_launch_description():
         executable='stonefish_simulator',
         name='stonefish_simulator',
         output='screen',
-        parameters=[
-            sim_params_file,
-            {
-                'scenario_description': scenario_file,
-                'simulation_rate': LaunchConfiguration('simulation_rate'),
-                'window_res_x': LaunchConfiguration('window_res_x'),
-                'window_res_y': LaunchConfiguration('window_res_y'),
-            }
-        ],
+        parameters=[{
+            'scenario_description': scenario_file,
+            'simulation_rate': LaunchConfiguration('simulation_rate'),
+            'window_res_x': LaunchConfiguration('window_res_x'),
+            'window_res_y': LaunchConfiguration('window_res_y'),
+        }],
     )
 
     # Include robot description (robot_state_publisher)
