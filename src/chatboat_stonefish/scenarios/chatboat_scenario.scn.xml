@@ -59,30 +59,24 @@
   <robot name="girona500" fixed="false" self_collisions="false">
     <base_link name="base_link" type="compound">
       <external_part name="hull_upper_port" type="cylinder" physics="submerged" buoyant="true">
-        <physical>
-          <dimensions radius="0.15" height="1.5"/>
-          <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-        </physical>
+        <dimensions radius="0.15" height="1.5"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
         <material name="Foam"/>
         <mass value="15.0"/>
         <look name="yellow"/>
         <compound_transform rpy="0.0 1.5708 0.0" xyz="0.0 -0.22 -0.12"/>
       </external_part>
       <external_part name="hull_upper_stbd" type="cylinder" physics="submerged" buoyant="true">
-        <physical>
-          <dimensions radius="0.15" height="1.5"/>
-          <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-        </physical>
+        <dimensions radius="0.15" height="1.5"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
         <material name="Foam"/>
         <mass value="15.0"/>
         <look name="yellow"/>
         <compound_transform rpy="0.0 1.5708 0.0" xyz="0.0 0.22 -0.12"/>
       </external_part>
       <external_part name="hull_lower" type="cylinder" physics="submerged" buoyant="true">
-        <physical>
-          <dimensions radius="0.15" height="1.5"/>
-          <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-        </physical>
+        <dimensions radius="0.15" height="1.5"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
         <material name="Aluminium"/>
         <mass value="110.0"/>
         <look name="grey"/>
