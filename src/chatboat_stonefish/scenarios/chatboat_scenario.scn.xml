@@ -188,8 +188,8 @@
     </base_link>
 
     <!-- ============================================================== -->
-    <!-- MANIPULATOR ARM: Reach Alpha 5 (4 revolute DOF + jaws)         -->
-    <!-- Cylinder primitives for arm links, OBJ meshes for jaws         -->
+    <!-- MANIPULATOR ARM: Reach Alpha 5 (4 revolute DOF + gripper)      -->
+    <!-- Cylinder primitives (known working baseline)                   -->
     <!-- ============================================================== -->
 
     <!-- Arm base adapter (URDF: base_link, RS1-1010) -->
@@ -284,63 +284,32 @@
       <limits min="0.0" max="3.22"/>
     </joint>
 
-    <!-- TCP adapter (cylinder placeholder for RS1-124) -->
-    <link name="arm_tcp_adapter" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.025" height="0.020"/>
-      <origin xyz="0.0 0.0 0.01" rpy="0.0 0.0 0.0"/>
-      <material name="Aluminium"/>
-      <mass value="0.050"/>
-      <look name="arm_dark"/>
+    <!-- Magnetic gripper tip -->
+    <link name="gripper_tip" type="sphere" physics="submerged" buoyant="true">
+      <dimensions radius="0.035"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <material name="PermanentMagnet"/>
+      <mass value="0.15"/>
+      <look name="red"/>
     </link>
-    <joint name="tcp_adapter_joint" type="fixed">
+    <joint name="gripper_joint" type="fixed">
       <parent name="arm_wrist"/>
-      <child name="arm_tcp_adapter"/>
-      <origin xyz="0.0 0.0 0.09975" rpy="0.0 0.0 0.0"/>
+      <child name="gripper_tip"/>
+      <origin xyz="0.0 0.0 0.14" rpy="0.0 0.0 0.0"/>
     </joint>
 
-    <!-- Mechanical jaws (box primitives for now) -->
-    <link name="jaw_left" type="box" physics="submerged" buoyant="true">
-      <dimensions xyz="0.012 0.03 0.09"/>
-      <origin xyz="0.0 -0.008 0.045" rpy="0.0 0.0 0.0"/>
-      <material name="Aluminium"/>
-      <mass value="0.055"/>
-      <look name="arm_dark"/>
-    </link>
-    <joint name="jaw_left_joint" type="revolute">
-      <parent name="arm_tcp_adapter"/>
-      <child name="jaw_left"/>
-      <origin xyz="0.0 0.0155 0.0159" rpy="0.0 0.0 0.0"/>
-      <axis xyz="-1.0 0.0 0.0"/>
-      <limits min="0.0" max="0.5"/>
-    </joint>
-
-    <link name="jaw_right" type="box" physics="submerged" buoyant="true">
-      <dimensions xyz="0.012 0.03 0.09"/>
-      <origin xyz="0.0 0.008 0.045" rpy="0.0 0.0 0.0"/>
-      <material name="Aluminium"/>
-      <mass value="0.055"/>
-      <look name="arm_dark"/>
-    </link>
-    <joint name="jaw_right_joint" type="revolute">
-      <parent name="arm_tcp_adapter"/>
-      <child name="jaw_right"/>
-      <origin xyz="0.0 -0.0155 0.0159" rpy="0.0 0.0 0.0"/>
-      <axis xyz="1.0 0.0 0.0"/>
-      <limits min="0.0" max="0.5"/>
-    </joint>
-
-    <!-- End-effector control frame (between jaw tips) -->
+    <!-- End-effector control frame -->
     <link name="ee_frame" type="sphere" physics="surface" buoyant="false">
       <dimensions radius="0.005"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
       <material name="Neutral"/>
       <mass value="0.001"/>
-      <look name="arm_dark"/>
+      <look name="red"/>
     </link>
     <joint name="ee_frame_joint" type="fixed">
-      <parent name="arm_tcp_adapter"/>
+      <parent name="gripper_tip"/>
       <child name="ee_frame"/>
-      <origin xyz="0.0 0.0 0.06" rpy="0.0 0.0 0.0"/>
+      <origin xyz="0.0 0.0 0.025" rpy="0.0 0.0 0.0"/>
     </joint>
 
     <!-- ============================================================== -->
@@ -499,15 +468,6 @@
       <controller position_gain="2.0" velocity_gain="3.0" max_torque="3.0"/>
     </actuator>
 
-    <!-- Jaw servo actuators (grip force via position control) -->
-    <actuator name="servo_jaw_left" type="servo">
-      <joint name="jaw_left_joint"/>
-      <controller position_gain="5.0" velocity_gain="3.0" max_torque="10.0"/>
-    </actuator>
-    <actuator name="servo_jaw_right" type="servo">
-      <joint name="jaw_right_joint"/>
-      <controller position_gain="5.0" velocity_gain="3.0" max_torque="10.0"/>
-    </actuator>
 
     <!-- ============================================================== -->
     <!-- SENSORS                                                        -->
@@ -589,14 +549,6 @@
     </sensor>
     <sensor name="encoder_b" type="encoder" rate="100.0">
       <joint name="axis_b"/>
-      <ros_publisher topic="/chatboat/joint_states"/>
-    </sensor>
-    <sensor name="encoder_jaw_left" type="encoder" rate="100.0">
-      <joint name="jaw_left_joint"/>
-      <ros_publisher topic="/chatboat/joint_states"/>
-    </sensor>
-    <sensor name="encoder_jaw_right" type="encoder" rate="100.0">
-      <joint name="jaw_right_joint"/>
       <ros_publisher topic="/chatboat/joint_states"/>
     </sensor>
 
