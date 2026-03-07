@@ -51,10 +51,12 @@
   </looks>
 
   <!-- Seafloor at 5m depth -->
-  <static name="seafloor" type="plane">
+  <static name="seafloor" type="box">
+    <dimensions xyz="100.0 100.0 1.0"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
     <material name="Sand"/>
     <look name="seabed"/>
-    <world_transform xyz="0.0 0.0 5.0" rpy="0.0 0.0 0.0"/>
+    <world_transform xyz="0.0 0.0 5.5" rpy="0.0 0.0 0.0"/>
   </static>
 
   <!-- Manipulation targets -->
