@@ -21,13 +21,16 @@
     <material name="Neutral" density="1000" restitution="0.5"/>
   </materials>
 
-  <friction_table>
-    <friction material1="Aluminium" material2="Sand" static="0.6" dynamic="0.4"/>
-    <friction material1="Ferromagnetic" material2="Sand" static="0.7" dynamic="0.5"/>
-    <friction material1="Ferromagnetic" material2="Ferromagnetic" static="0.5" dynamic="0.3"/>
-    <friction material1="PermanentMagnet" material2="Ferromagnetic" static="0.8" dynamic="0.6"/>
-    <friction material1="Neutral" material2="Sand" static="0.5" dynamic="0.3"/>
-  </friction_table>
+  <looks>
+    <look name="seabed" gray="0.6" roughness="0.9"/>
+    <look name="red" gray="0.5" roughness="0.5" color="1.0 0.1 0.1"/>
+    <look name="green" gray="0.5" roughness="0.5" color="0.1 0.8 0.1"/>
+    <look name="yellow" gray="0.5" roughness="0.3" color="0.9 0.8 0.2"/>
+    <look name="grey" gray="0.5" roughness="0.5" color="0.6 0.6 0.65"/>
+    <look name="black" gray="0.3" roughness="0.5" color="0.2 0.2 0.2"/>
+    <look name="orange" gray="0.5" roughness="0.5" color="0.9 0.5 0.1"/>
+    <look name="white" gray="0.8" roughness="0.3" color="0.9 0.9 0.9"/>
+  </looks>
 
   <static name="seafloor" type="plane">
     <material name="Sand"/>
@@ -37,19 +40,19 @@
 
   <dynamic name="cube_a" type="box">
     <dimensions xyz="0.1 0.1 0.1"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
     <material name="Ferromagnetic"/>
     <mass value="2.0"/>
     <look name="red"/>
-    <compound_transform xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
     <world_transform xyz="1.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
   </dynamic>
 
   <dynamic name="cube_b" type="box">
     <dimensions xyz="0.1 0.1 0.1"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
     <material name="Ferromagnetic"/>
     <mass value="2.0"/>
     <look name="green"/>
-    <compound_transform xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
     <world_transform xyz="2.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
   </dynamic>
 
