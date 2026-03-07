@@ -1,0 +1,161 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ECA 5E Micro 4-DOF manipulator -->
+
+  <xacro:macro name="eca5e" params="parent namespace:=girona500">
+
+    <!-- Arm base (fixed to vehicle) -->
+    <link name="arm_base">
+      <visual>
+        <origin xyz="0 0 0.025" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.04" length="0.05"/>
+        </geometry>
+        <material name="arm_dark">
+          <color rgba="0.25 0.25 0.25 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0.025" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.04" length="0.05"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.5"/>
+        <origin xyz="0 0 0.025" rpy="0 0 0"/>
+        <inertia ixx="0.0003" ixy="0" ixz="0" iyy="0.0003" iyz="0" izz="0.0004"/>
+      </inertial>
+    </link>
+    <joint name="arm_base_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="arm_base"/>
+      <origin xyz="0.75 0.0 0.15" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Joint 1: Shoulder yaw (Z axis) -->
+    <link name="arm_link1">
+      <visual>
+        <origin xyz="0 0 0.05" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.035" length="0.10"/>
+        </geometry>
+        <material name="arm_dark"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0.05" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.035" length="0.10"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.4"/>
+        <origin xyz="0 0 0.05" rpy="0 0 0"/>
+        <inertia ixx="0.0004" ixy="0" ixz="0" iyy="0.0004" iyz="0" izz="0.0002"/>
+      </inertial>
+    </link>
+    <joint name="q1_shoulder_yaw" type="revolute">
+      <parent link="arm_base"/>
+      <child link="arm_link1"/>
+      <origin xyz="0 0 0.05" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="-3.14" upper="3.14" effort="20.0" velocity="0.20"/>
+      <dynamics damping="0.5" friction="0.1"/>
+    </joint>
+
+    <!-- Joint 2: Shoulder pitch (Y axis) -->
+    <link name="arm_link2">
+      <visual>
+        <origin xyz="0.10 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.030" length="0.20"/>
+        </geometry>
+        <material name="arm_orange">
+          <color rgba="0.9 0.5 0.1 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0.10 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.030" length="0.20"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.6"/>
+        <origin xyz="0.10 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.0002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.002"/>
+      </inertial>
+    </link>
+    <joint name="q2_shoulder_pitch" type="revolute">
+      <parent link="arm_link1"/>
+      <child link="arm_link2"/>
+      <origin xyz="0 0 0.10" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-1.57" upper="1.57" effort="20.0" velocity="0.20"/>
+      <dynamics damping="0.5" friction="0.1"/>
+    </joint>
+
+    <!-- Joint 3: Elbow pitch (Y axis) -->
+    <link name="arm_link3">
+      <visual>
+        <origin xyz="0.10 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.025" length="0.20"/>
+        </geometry>
+        <material name="arm_orange"/>
+      </visual>
+      <collision>
+        <origin xyz="0.10 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.025" length="0.20"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.5"/>
+        <origin xyz="0.10 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.0002" ixy="0" ixz="0" iyy="0.0017" iyz="0" izz="0.0017"/>
+      </inertial>
+    </link>
+    <joint name="q3_elbow_pitch" type="revolute">
+      <parent link="arm_link2"/>
+      <child link="arm_link3"/>
+      <origin xyz="0.20 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-2.36" upper="2.36" effort="15.0" velocity="0.15"/>
+      <dynamics damping="0.4" friction="0.1"/>
+    </joint>
+
+    <!-- Joint 4: Wrist pitch (Y axis) -->
+    <link name="arm_link4">
+      <visual>
+        <origin xyz="0.05 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.025" length="0.10"/>
+        </geometry>
+        <material name="arm_dark"/>
+      </visual>
+      <collision>
+        <origin xyz="0.05 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.025" length="0.10"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.3"/>
+        <origin xyz="0.05 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0003" iyz="0" izz="0.0003"/>
+      </inertial>
+    </link>
+    <joint name="q4_wrist_pitch" type="revolute">
+      <parent link="arm_link3"/>
+      <child link="arm_link4"/>
+      <origin xyz="0.20 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-2.36" upper="2.36" effort="10.0" velocity="0.15"/>
+      <dynamics damping="0.3" friction="0.1"/>
+    </joint>
+
+  </xacro:macro>
+
+</robot>

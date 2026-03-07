@@ -1,0 +1,23 @@
+# Thruster allocation matrix (TAM)
+# Maps [surge, sway, heave, yaw] -> [T1, T2, T3, T4, T5]
+# T1: surge_port, T2: surge_stbd, T3: sway, T4: heave_port, T5: heave_stbd
+thruster_allocation:
+  # Each row maps a DOF command to thruster contributions
+  # surge -> T1=1, T2=1
+  # sway -> T3=1
+  # heave -> T4=1, T5=1
+  # yaw -> T1=-1, T2=1 (differential surge thrusters)
+  matrix:
+    - [1.0, 1.0, 0.0, 0.0, 0.0]   # surge
+    - [0.0, 0.0, 1.0, 0.0, 0.0]   # sway
+    - [0.0, 0.0, 0.0, 1.0, 1.0]   # heave
+    - [-1.0, 1.0, 0.0, 0.0, 0.0]  # yaw
+
+vehicle:
+  max_thrust_normalized: 1.0
+  thruster_names:
+    - thruster_surge_port
+    - thruster_surge_stbd
+    - thruster_sway
+    - thruster_heave_port
+    - thruster_heave_stbd

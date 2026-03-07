@@ -1,0 +1,25 @@
+# For local or generic cloud GPU testing (not needed on RunPod).
+# Usage: docker compose -f docker/docker-compose.yml up --build
+services:
+  chatboat_sim:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - DISPLAY=:99
+    ports:
+      - "6080:6080"
+    volumes:
+      - ../src:/ros2_ws/src:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    stdin_open: true
+    tty: true

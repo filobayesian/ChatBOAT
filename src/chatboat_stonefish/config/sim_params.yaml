@@ -1,0 +1,12 @@
+# Stonefish simulation parameters
+simulation:
+  solver_iterations: 50
+  time_step: 0.001
+  real_time_factor: 1.0
+  window_width: 1200
+  window_height: 900
+
+rendering:
+  shadows: true
+  ambient_occlusion: true
+  ocean_particles: true

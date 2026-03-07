@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<scenario>
+  <environment>
+    <ned latitude="41.7" longitude="2.8"/>
+    <ocean>
+      <water density="1025.0" jerlov="0.2"/>
+      <waves height="0.0"/>
+      <particles enabled="true"/>
+    </ocean>
+    <atmosphere>
+      <sun azimuth="180.0" elevation="60.0"/>
+    </atmosphere>
+  </environment>
+
+  <!-- Materials -->
+  <materials>
+    <material name="Aluminium" density="2710" restitution="0.5"/>
+    <material name="Foam" density="200" restitution="0.3"/>
+    <material name="Sand" density="2650" restitution="0.2"/>
+    <material name="Ferromagnetic" density="7800" restitution="0.4"/>
+    <material name="PermanentMagnet" density="7500" restitution="0.4"/>
+    <material name="Neutral" density="1000" restitution="0.5"/>
+  </materials>
+
+  <!-- Friction table -->
+  <friction_table>
+    <friction material1="Aluminium" material2="Sand" static="0.6" dynamic="0.4"/>
+    <friction material1="Ferromagnetic" material2="Sand" static="0.7" dynamic="0.5"/>
+    <friction material1="Ferromagnetic" material2="Ferromagnetic" static="0.5" dynamic="0.3"/>
+    <friction material1="PermanentMagnet" material2="Ferromagnetic" static="0.8" dynamic="0.6"/>
+    <friction material1="Neutral" material2="Sand" static="0.5" dynamic="0.3"/>
+  </friction_table>
+
+  <!-- Seafloor plane at 5m depth -->
+  <static name="seafloor" type="plane">
+    <material name="Sand"/>
+    <look name="seabed"/>
+    <world_transform xyz="0.0 0.0 5.0" rpy="0.0 0.0 0.0"/>
+  </static>
+
+  <!-- Cube A (to be picked up) -->
+  <dynamic name="cube_a" type="box">
+    <dimensions xyz="0.1 0.1 0.1"/>
+    <material name="Ferromagnetic"/>
+    <mass value="2.0"/>
+    <look name="red"/>
+    <compound_transform xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <world_transform xyz="1.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
+  </dynamic>
+
+  <!-- Cube B (stacking target) -->
+  <dynamic name="cube_b" type="box">
+    <dimensions xyz="0.1 0.1 0.1"/>
+    <material name="Ferromagnetic"/>
+    <mass value="2.0"/>
+    <look name="green"/>
+    <compound_transform xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <world_transform xyz="2.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
+  </dynamic>
+
+  <!-- Robot (defined in separate file) -->
+  <include file="$(find chatboat_stonefish)/scenarios/girona500_uvms.xml"/>
+
+</scenario>

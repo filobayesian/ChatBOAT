@@ -1,0 +1,22 @@
+# Joint limits for ECA 5E 4-DOF manipulator
+joint_limits:
+  q1_shoulder_yaw:
+    min_position: -3.14
+    max_position: 3.14
+    max_velocity: 0.20
+    max_effort: 20.0
+  q2_shoulder_pitch:
+    min_position: -1.57
+    max_position: 1.57
+    max_velocity: 0.20
+    max_effort: 20.0
+  q3_elbow_pitch:
+    min_position: -2.36
+    max_position: 2.36
+    max_velocity: 0.15
+    max_effort: 15.0
+  q4_wrist_pitch:
+    min_position: -2.36
+    max_position: 2.36
+    max_velocity: 0.15
+    max_effort: 10.0

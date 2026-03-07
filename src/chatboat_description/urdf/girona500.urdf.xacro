@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- GIRONA500 AUV body: 3 torpedo hulls, 5 thrusters (4 DOF) -->
+
+  <xacro:macro name="girona500" params="namespace:=girona500">
+
+    <!-- Base link (vehicle body) -->
+    <link name="${namespace}/base_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="1.5 0.8 0.5"/>
+        </geometry>
+        <material name="vehicle_blue">
+          <color rgba="0.2 0.4 0.7 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="1.5 0.8 0.5"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="140.0"/>
+        <origin xyz="0 0 0.055" rpy="0 0 0"/>
+        <inertia ixx="5.0" ixy="0" ixz="0" iyy="12.0" iyz="0" izz="12.0"/>
+      </inertial>
+    </link>
+
+    <!-- Upper port hull (buoyant foam) -->
+    <link name="${namespace}/hull_upper_port">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 1.5708 0"/>
+        <geometry>
+          <cylinder radius="0.15" length="1.5"/>
+        </geometry>
+        <material name="foam_yellow">
+          <color rgba="0.9 0.8 0.2 1.0"/>
+        </material>
+      </visual>
+    </link>
+    <joint name="${namespace}/hull_upper_port_joint" type="fixed">
+      <parent link="${namespace}/base_link"/>
+      <child link="${namespace}/hull_upper_port"/>
+      <origin xyz="0 -0.22 -0.12" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Upper starboard hull (buoyant foam) -->
+    <link name="${namespace}/hull_upper_stbd">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 1.5708 0"/>
+        <geometry>
+          <cylinder radius="0.15" length="1.5"/>
+        </geometry>
+        <material name="foam_yellow"/>
+      </visual>
+    </link>
+    <joint name="${namespace}/hull_upper_stbd_joint" type="fixed">
+      <parent link="${namespace}/base_link"/>
+      <child link="${namespace}/hull_upper_stbd"/>
+      <origin xyz="0 0.22 -0.12" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Lower hull (aluminium/batteries) -->
+    <link name="${namespace}/hull_lower">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 1.5708 0"/>
+        <geometry>
+          <cylinder radius="0.15" length="1.5"/>
+        </geometry>
+        <material name="aluminium_grey">
+          <color rgba="0.6 0.6 0.65 1.0"/>
+        </material>
+      </visual>
+    </link>
+    <joint name="${namespace}/hull_lower_joint" type="fixed">
+      <parent link="${namespace}/base_link"/>
+      <child link="${namespace}/hull_lower"/>
+      <origin xyz="0 0 0.17" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Thruster frames (for visualization / TF) -->
+    <!-- T1: surge port -->
+    <link name="${namespace}/thruster_surge_port"/>
+    <joint name="${namespace}/thruster_surge_port_joint" type="fixed">
+      <parent link="${namespace}/base_link"/>
+      <child link="${namespace}/thruster_surge_port"/>
+      <origin xyz="-0.75 -0.30 0.0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- T2: surge starboard -->
+    <link name="${namespace}/thruster_surge_stbd"/>
+    <joint name="${namespace}/thruster_surge_stbd_joint" type="fixed">
+      <parent link="${namespace}/base_link"/>
+      <child link="${namespace}/thruster_surge_stbd"/>
+      <origin xyz="-0.75 0.30 0.0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- T3: sway -->
+    <link name="${namespace}/thruster_sway"/>
+    <joint name="${namespace}/thruster_sway_joint" type="fixed">
+      <parent link="${namespace}/base_link"/>
+      <child link="${namespace}/thruster_sway"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- T4: heave port -->
+    <link name="${namespace}/thruster_heave_port"/>
+    <joint name="${namespace}/thruster_heave_port_joint" type="fixed">
+      <parent link="${namespace}/base_link"/>
+      <child link="${namespace}/thruster_heave_port"/>
+      <origin xyz="0.0 -0.30 0.0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- T5: heave starboard -->
+    <link name="${namespace}/thruster_heave_stbd"/>
+    <joint name="${namespace}/thruster_heave_stbd_joint" type="fixed">
+      <parent link="${namespace}/base_link"/>
+      <child link="${namespace}/thruster_heave_stbd"/>
+      <origin xyz="0.0 0.30 0.0" rpy="0 0 0"/>
+    </joint>
+
+  </xacro:macro>
+
+</robot>
