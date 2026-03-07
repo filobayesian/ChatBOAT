@@ -555,8 +555,7 @@
     <!-- ============================================================== -->
     <!-- ROS2 TOPIC WIRING                                              -->
     <!-- ============================================================== -->
-    <ros_subscriber thrusters="/chatboat/thruster_commands"/>
-    <ros_subscriber servos="/chatboat/joint_commands"/>
+    <ros_subscriber thrusters="/chatboat/thruster_commands" servos="/chatboat/joint_commands"/>
 
     <!-- Initial position: 2m depth, centered -->
     <world_transform xyz="0.0 0.0 2.0" rpy="0.0 0.0 0.0"/>
