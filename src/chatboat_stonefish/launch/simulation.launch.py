@@ -19,20 +19,22 @@ def generate_launch_description():
         description='Stonefish simulation rate (Hz)'
     )
 
-    # Stonefish simulator node
-    # CLI arg: data directory; ROS2 params: scenario file, rate, resolution
+    # stonefish_simulator expects 6 CLI args:
+    #   argv[1]=data_dir argv[2]=scenario argv[3]=rate
+    #   argv[4]=window_w argv[5]=window_h argv[6]=quality
     stonefish_node = Node(
         package='stonefish_ros2',
         executable='stonefish_simulator',
         name='stonefish_simulator',
         output='screen',
-        arguments=[data_dir],
-        parameters=[{
-            'scenario_description': scenario_file,
-            'simulation_rate': LaunchConfiguration('simulation_rate'),
-            'window_res_x': 1200,
-            'window_res_y': 900,
-        }],
+        arguments=[
+            data_dir,
+            scenario_file,
+            LaunchConfiguration('simulation_rate'),
+            '1200',   # window width
+            '900',    # window height
+            'medium', # rendering quality
+        ],
     )
 
     # Include robot description (robot_state_publisher)
