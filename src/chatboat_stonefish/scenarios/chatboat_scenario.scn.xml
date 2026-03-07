@@ -153,13 +153,15 @@
         <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 0.1 0.0"/>
       </internal_part>
 
-      <!-- Ballast weights (tuned for near-neutral buoyancy + arm weight compensation) -->
+      <!-- Ballast weights (tuned for near-neutral buoyancy) -->
+      <!-- Buoyancy budget: 4 boxes × (0.2×0.15×0.091) × 1025 ≈ 11.2 kg -->
+      <!-- Mass budget: hull 9.0 + boxes 0.1 + arm ~1.7 + weights → target ~11.2 -->
       <internal_part name="WeightCenter" type="sphere" physics="submerged" buoyant="false">
         <dimensions radius="0.01"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="1.5"/>
+        <mass value="0.2"/>
         <compound_transform rpy="0.0 0.0 0.0" xyz="-0.05 0.0 0.1"/>
       </internal_part>
       <internal_part name="WeightLeft" type="sphere" physics="submerged" buoyant="false">
@@ -167,7 +169,7 @@
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="1.0"/>
+        <mass value="0.1"/>
         <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 -0.075 0.1"/>
       </internal_part>
       <internal_part name="WeightRight" type="sphere" physics="submerged" buoyant="false">
@@ -175,7 +177,7 @@
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="1.0"/>
+        <mass value="0.1"/>
         <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.075 0.1"/>
       </internal_part>
     </base_link>
