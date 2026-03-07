@@ -3,10 +3,9 @@ import time
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float64MultiArray, Bool
+from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
 from nav_msgs.msg import Odometry
-from std_srvs.srv import SetBool
 
 
 class State:
@@ -42,6 +41,10 @@ class TestCommander(Node):
     ARM_STOWED = [0.0, 0.0, 0.0, 0.0]
     ARM_REACH_DOWN = [0.0, 1.2, 1.0, 0.5]
 
+    # Jaw positions (0.0 = closed, 0.4 = open)
+    JAWS_OPEN = 0.4
+    JAWS_CLOSED = 0.0
+
     def __init__(self):
         super().__init__('test_commander')
 
@@ -56,10 +59,6 @@ class TestCommander(Node):
             Odometry, '/chatboat/odometry', self._odom_cb, 10)
         self._joint_sub = self.create_subscription(
             JointState, '/chatboat/joint_states', self._joint_state_cb, 10)
-
-        # Gripper service client
-        self._gripper_client = self.create_client(
-            SetBool, '/chatboat/gripper/activate')
 
         # State
         self._state = State.INIT
@@ -109,19 +108,14 @@ class TestCommander(Node):
         msg.data = [max(-1.0, min(1.0, t)) for t in [t1, t2, t3, t4, t5, t6, t7, t8]]
         self._thruster_pub.publish(msg)
 
-    def _send_arm(self, positions):
+    def _send_arm(self, positions, jaw_pos=None):
         msg = JointState()
         msg.name = ['axis_e', 'axis_d', 'axis_c', 'axis_b']
         msg.position = [float(p) for p in positions]
+        if jaw_pos is not None:
+            msg.name += ['jaw_left_joint', 'jaw_right_joint']
+            msg.position += [float(jaw_pos), float(jaw_pos)]
         self._joint_pub.publish(msg)
-
-    def _call_gripper(self, activate):
-        if not self._gripper_client.service_is_ready():
-            self.get_logger().warn('Gripper service not available')
-            return
-        req = SetBool.Request()
-        req.data = activate
-        self._gripper_client.call_async(req)
 
     def _elapsed(self):
         return (self.get_clock().now() - self._state_entry_time).nanoseconds / 1e9
@@ -141,46 +135,49 @@ class TestCommander(Node):
 
         elif self._state == State.APPROACH_CUBE_A:
             self._send_thruster(surge=0.3)
-            self._send_arm(self.ARM_STOWED)
+            self._send_arm(self.ARM_STOWED, jaw_pos=self.JAWS_OPEN)
             if elapsed > self._state_duration:
                 self._transition(State.DESCEND_TO_CUBE_A, 6.0)
 
         elif self._state == State.DESCEND_TO_CUBE_A:
             self._send_thruster(heave=0.3)
-            self._send_arm(self.ARM_REACH_DOWN)
+            self._send_arm(self.ARM_REACH_DOWN, jaw_pos=self.JAWS_OPEN)
             if elapsed > self._state_duration:
                 self._transition(State.GRIP_CUBE_A, 3.0)
 
         elif self._state == State.GRIP_CUBE_A:
             self._send_thruster()
-            self._call_gripper(True)
+            self._send_arm(self.ARM_REACH_DOWN, jaw_pos=self.JAWS_CLOSED)
             if elapsed > self._state_duration:
                 self._transition(State.LIFT_CUBE_A, 5.0)
 
         elif self._state == State.LIFT_CUBE_A:
             self._send_thruster(heave=-0.3)
+            self._send_arm(self.ARM_REACH_DOWN, jaw_pos=self.JAWS_CLOSED)
             if elapsed > self._state_duration:
                 self._transition(State.TRANSIT_TO_CUBE_B, 8.0)
 
         elif self._state == State.TRANSIT_TO_CUBE_B:
             self._send_thruster(surge=0.3)
+            self._send_arm(self.ARM_REACH_DOWN, jaw_pos=self.JAWS_CLOSED)
             if elapsed > self._state_duration:
                 self._transition(State.DESCEND_TO_CUBE_B, 6.0)
 
         elif self._state == State.DESCEND_TO_CUBE_B:
             self._send_thruster(heave=0.3)
+            self._send_arm(self.ARM_REACH_DOWN, jaw_pos=self.JAWS_CLOSED)
             if elapsed > self._state_duration:
                 self._transition(State.RELEASE_CUBE_A, 3.0)
 
         elif self._state == State.RELEASE_CUBE_A:
             self._send_thruster()
-            self._call_gripper(False)
+            self._send_arm(self.ARM_REACH_DOWN, jaw_pos=self.JAWS_OPEN)
             if elapsed > self._state_duration:
                 self._transition(State.ASCEND, 5.0)
 
         elif self._state == State.ASCEND:
             self._send_thruster(heave=-0.3)
-            self._send_arm(self.ARM_STOWED)
+            self._send_arm(self.ARM_STOWED, jaw_pos=self.JAWS_CLOSED)
             if elapsed > self._state_duration:
                 self._transition(State.DONE)
 

@@ -35,6 +35,9 @@
       <friction material1="Rock" material2="Rock" static="0.9" dynamic="0.7"/>
       <friction material1="Fiberglass" material2="Fiberglass" static="0.5" dynamic="0.2"/>
       <friction material1="Aluminium" material2="Aluminium" static="0.8" dynamic="0.5"/>
+      <friction material1="Aluminium" material2="Ferromagnetic" static="0.9" dynamic="0.7"/>
+      <friction material1="Ferromagnetic" material2="Ferromagnetic" static="0.8" dynamic="0.6"/>
+      <friction material1="Sand" material2="Ferromagnetic" static="0.6" dynamic="0.4"/>
     </friction_table>
   </materials>
 
@@ -195,7 +198,6 @@
       <physical>
         <mesh filename="alpha5/RS1-1010.obj" scale="1.0"/>
         <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-        <thickness value="0.005"/>
       </physical>
       <visual>
         <mesh filename="alpha5/RS1-1010.obj" scale="1.0"/>
@@ -216,7 +218,6 @@
       <physical>
         <mesh filename="alpha5/M3-INLINE.obj" scale="1.0"/>
         <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-        <thickness value="0.005"/>
       </physical>
       <visual>
         <mesh filename="alpha5/M3-INLINE.obj" scale="1.0"/>
@@ -237,7 +238,6 @@
       <physical>
         <mesh filename="alpha5/M2-1-1.obj" scale="1.0"/>
         <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-        <thickness value="0.005"/>
       </physical>
       <visual>
         <mesh filename="alpha5/M2-1-1.obj" scale="1.0"/>
@@ -260,7 +260,6 @@
       <physical>
         <mesh filename="alpha5/M2.obj" scale="1.0"/>
         <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-        <thickness value="0.005"/>
       </physical>
       <visual>
         <mesh filename="alpha5/M2.obj" scale="1.0"/>
@@ -283,7 +282,6 @@
       <physical>
         <mesh filename="alpha5/M2-1-3.obj" scale="1.0"/>
         <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-        <thickness value="0.005"/>
       </physical>
       <visual>
         <mesh filename="alpha5/M2-1-3.obj" scale="1.0"/>
@@ -306,7 +304,6 @@
       <physical>
         <mesh filename="alpha5/M1.obj" scale="1.0"/>
         <origin rpy="0.0 -1.5708 0.0" xyz="0.0 0.0 0.0"/>
-        <thickness value="0.005"/>
       </physical>
       <visual>
         <mesh filename="alpha5/M1.obj" scale="1.0"/>
@@ -329,7 +326,6 @@
       <physical>
         <mesh filename="alpha5/RS1-124.obj" scale="1.0"/>
         <origin rpy="0.0 -1.5708 0.0" xyz="0.0 0.0 0.0"/>
-        <thickness value="0.005"/>
       </physical>
       <visual>
         <mesh filename="alpha5/RS1-124.obj" scale="1.0"/>
@@ -345,32 +341,62 @@
       <origin xyz="0.0 0.0 0.09975" rpy="0.0 0.0 0.0"/>
     </joint>
 
-    <!-- Magnetic gripper tip (replaces Reach Alpha 5 jaws) -->
-    <link name="gripper_tip" type="sphere" physics="submerged" buoyant="true">
-      <dimensions radius="0.035"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-      <material name="PermanentMagnet"/>
-      <mass value="0.15"/>
-      <look name="red"/>
+    <!-- Mechanical jaws (URDF: rs1_130 + rs1_139, revolute for grasping) -->
+    <!-- Push rod offset (0.009) + jaw joint offset (0.0069) = 0.0159 from TCP adapter -->
+    <link name="jaw_left" type="model" physics="submerged" buoyant="true">
+      <physical>
+        <mesh filename="alpha5/RS1-130.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </physical>
+      <visual>
+        <mesh filename="alpha5/RS1-130.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </visual>
+      <material name="Aluminium"/>
+      <mass value="0.055"/>
+      <look name="arm_dark"/>
     </link>
-    <joint name="gripper_joint" type="fixed">
+    <joint name="jaw_left_joint" type="revolute">
       <parent name="arm_tcp_adapter"/>
-      <child name="gripper_tip"/>
-      <origin xyz="0.0 0.0 0.04" rpy="0.0 0.0 0.0"/>
+      <child name="jaw_left"/>
+      <origin xyz="0.0 0.0155 0.0159" rpy="0.0 0.0 0.0"/>
+      <axis xyz="-1.0 0.0 0.0"/>
+      <limits min="0.0" max="0.5"/>
     </joint>
 
-    <!-- End-effector control frame -->
+    <link name="jaw_right" type="model" physics="submerged" buoyant="true">
+      <physical>
+        <mesh filename="alpha5/RS1-139.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </physical>
+      <visual>
+        <mesh filename="alpha5/RS1-139.obj" scale="1.0"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </visual>
+      <material name="Aluminium"/>
+      <mass value="0.055"/>
+      <look name="arm_dark"/>
+    </link>
+    <joint name="jaw_right_joint" type="revolute">
+      <parent name="arm_tcp_adapter"/>
+      <child name="jaw_right"/>
+      <origin xyz="0.0 -0.0155 0.0159" rpy="0.0 0.0 0.0"/>
+      <axis xyz="1.0 0.0 0.0"/>
+      <limits min="0.0" max="0.5"/>
+    </joint>
+
+    <!-- End-effector control frame (between jaw tips) -->
     <link name="ee_frame" type="sphere" physics="surface" buoyant="false">
       <dimensions radius="0.005"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
       <material name="Neutral"/>
       <mass value="0.001"/>
-      <look name="red"/>
+      <look name="arm_dark"/>
     </link>
     <joint name="ee_frame_joint" type="fixed">
-      <parent name="gripper_tip"/>
+      <parent name="arm_tcp_adapter"/>
       <child name="ee_frame"/>
-      <origin xyz="0.0 0.0 0.025" rpy="0.0 0.0 0.0"/>
+      <origin xyz="0.0 0.0 0.06" rpy="0.0 0.0 0.0"/>
     </joint>
 
     <!-- ============================================================== -->
@@ -529,6 +555,16 @@
       <controller position_gain="2.0" velocity_gain="3.0" max_torque="3.0"/>
     </actuator>
 
+    <!-- Jaw servo actuators (grip force via position control) -->
+    <actuator name="servo_jaw_left" type="servo">
+      <joint name="jaw_left_joint"/>
+      <controller position_gain="5.0" velocity_gain="3.0" max_torque="10.0"/>
+    </actuator>
+    <actuator name="servo_jaw_right" type="servo">
+      <joint name="jaw_right_joint"/>
+      <controller position_gain="5.0" velocity_gain="3.0" max_torque="10.0"/>
+    </actuator>
+
     <!-- ============================================================== -->
     <!-- SENSORS                                                        -->
     <!-- ============================================================== -->
@@ -609,6 +645,14 @@
     </sensor>
     <sensor name="encoder_b" type="encoder" rate="100.0">
       <joint name="axis_b"/>
+      <ros_publisher topic="/chatboat/joint_states"/>
+    </sensor>
+    <sensor name="encoder_jaw_left" type="encoder" rate="100.0">
+      <joint name="jaw_left_joint"/>
+      <ros_publisher topic="/chatboat/joint_states"/>
+    </sensor>
+    <sensor name="encoder_jaw_right" type="encoder" rate="100.0">
+      <joint name="jaw_right_joint"/>
       <ros_publisher topic="/chatboat/joint_states"/>
     </sensor>
 

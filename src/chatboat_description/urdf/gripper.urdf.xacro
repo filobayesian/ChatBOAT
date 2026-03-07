@@ -1,45 +1,66 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Magnetic gripper end-effector -->
+  <!-- Mechanical jaw gripper (Reach Alpha 5 standard jaws) -->
 
   <xacro:macro name="gripper" params="parent">
 
-    <!-- Gripper tip with permanent magnet -->
-    <link name="gripper_tip">
+    <!-- Left jaw (RS1-130) -->
+    <link name="jaw_left">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry>
-          <sphere radius="0.03"/>
-        </geometry>
-        <material name="magnet_red">
-          <color rgba="0.8 0.2 0.2 1.0"/>
-        </material>
+        <geometry><box size="0.012 0.03 0.09"/></geometry>
+        <origin xyz="0.0 -0.008 0.045"/>
+        <material name="arm_dark"><color rgba="0.25 0.25 0.25 1.0"/></material>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry>
-          <sphere radius="0.03"/>
-        </geometry>
+        <geometry><box size="0.012 0.03 0.09"/></geometry>
+        <origin xyz="0.0 -0.008 0.045"/>
       </collision>
       <inertial>
-        <mass value="0.2"/>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <inertia ixx="0.00007" ixy="0" ixz="0" iyy="0.00007" iyz="0" izz="0.00007"/>
+        <mass value="0.055"/>
+        <origin xyz="0.0 -0.008 0.045"/>
+        <inertia ixx="0.00004125" ixy="0" ixz="0" iyy="0.000037785" iyz="0" izz="0.000004785"/>
       </inertial>
     </link>
-    <joint name="gripper_tip_joint" type="fixed">
+    <joint name="jaw_left_joint" type="revolute">
       <parent link="${parent}"/>
-      <child link="gripper_tip"/>
-      <origin xyz="0 0 0.04" rpy="0 0 0"/>
+      <child link="jaw_left"/>
+      <origin xyz="0 0.0155 0.0159"/>
+      <axis xyz="-1 0 0"/>
+      <limit lower="0.0" upper="0.5" effort="10.0" velocity="10.0"/>
     </joint>
 
-    <!-- End-effector frame (control reference point) -->
+    <!-- Right jaw (RS1-139) -->
+    <link name="jaw_right">
+      <visual>
+        <geometry><box size="0.012 0.03 0.09"/></geometry>
+        <origin xyz="0.0 0.008 0.045"/>
+        <material name="arm_dark"/>
+      </visual>
+      <collision>
+        <geometry><box size="0.012 0.03 0.09"/></geometry>
+        <origin xyz="0.0 0.008 0.045"/>
+      </collision>
+      <inertial>
+        <mass value="0.055"/>
+        <origin xyz="0.0 0.008 0.045"/>
+        <inertia ixx="0.00004125" ixy="0" ixz="0" iyy="0.000037785" iyz="0" izz="0.000004785"/>
+      </inertial>
+    </link>
+    <joint name="jaw_right_joint" type="revolute">
+      <parent link="${parent}"/>
+      <child link="jaw_right"/>
+      <origin xyz="0 -0.0155 0.0159"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="0.0" upper="0.5" effort="10.0" velocity="10.0"/>
+    </joint>
+
+    <!-- End-effector frame (between jaw tips) -->
     <link name="ee_frame"/>
     <joint name="ee_frame_joint" type="fixed">
-      <parent link="gripper_tip"/>
+      <parent link="${parent}"/>
       <child link="ee_frame"/>
-      <origin xyz="0.03 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0.06"/>
     </joint>
 
   </xacro:macro>
