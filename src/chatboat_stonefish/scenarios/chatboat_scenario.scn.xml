@@ -196,7 +196,7 @@
         <time_constant value="0.1"/>
       </rotor_dynamics>
       <thrust_model type="quadratic">
-        <coefficient forward="0.4472" backward="0.3354"/>
+        <thrust_coeff value="0.4472"/>
       </thrust_model>
     </actuator>
 
@@ -213,7 +213,7 @@
         <time_constant value="0.1"/>
       </rotor_dynamics>
       <thrust_model type="quadratic">
-        <coefficient forward="0.4472" backward="0.3354"/>
+        <thrust_coeff value="0.4472"/>
       </thrust_model>
     </actuator>
 
@@ -230,7 +230,7 @@
         <time_constant value="0.1"/>
       </rotor_dynamics>
       <thrust_model type="quadratic">
-        <coefficient forward="0.4472" backward="0.3354"/>
+        <thrust_coeff value="0.4472"/>
       </thrust_model>
     </actuator>
 
@@ -247,7 +247,7 @@
         <time_constant value="0.1"/>
       </rotor_dynamics>
       <thrust_model type="quadratic">
-        <coefficient forward="0.4472" backward="0.3354"/>
+        <thrust_coeff value="0.4472"/>
       </thrust_model>
     </actuator>
 
@@ -264,7 +264,7 @@
         <time_constant value="0.1"/>
       </rotor_dynamics>
       <thrust_model type="quadratic">
-        <coefficient forward="0.4472" backward="0.3354"/>
+        <thrust_coeff value="0.4472"/>
       </thrust_model>
     </actuator>
 
