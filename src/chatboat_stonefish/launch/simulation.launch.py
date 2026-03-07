@@ -12,34 +12,22 @@ def generate_launch_description():
     pkg_description = get_package_share_directory('chatboat_description')
 
     scenario_file = os.path.join(pkg_stonefish, 'scenarios', 'chatboat_scenario.scn.xml')
-    sim_params_file = os.path.join(pkg_stonefish, 'config', 'sim_params.yaml')
+    data_dir = os.path.join(pkg_stonefish, 'data')
 
     simulation_rate_arg = DeclareLaunchArgument(
         'simulation_rate', default_value='300.0',
         description='Stonefish simulation rate (Hz)'
     )
 
-    window_res_x_arg = DeclareLaunchArgument(
-        'window_res_x', default_value='1200',
-        description='Window resolution X'
-    )
-
-    window_res_y_arg = DeclareLaunchArgument(
-        'window_res_y', default_value='900',
-        description='Window resolution Y'
-    )
-
-    # Stonefish simulator node
+    # Stonefish simulator node — expects scenario file and data dir as CLI args
     stonefish_node = Node(
         package='stonefish_ros2',
         executable='stonefish_simulator',
         name='stonefish_simulator',
         output='screen',
+        arguments=[scenario_file, data_dir],
         parameters=[{
-            'scenario_description': scenario_file,
             'simulation_rate': LaunchConfiguration('simulation_rate'),
-            'window_res_x': LaunchConfiguration('window_res_x'),
-            'window_res_y': LaunchConfiguration('window_res_y'),
         }],
     )
 
@@ -52,8 +40,6 @@ def generate_launch_description():
 
     return LaunchDescription([
         simulation_rate_arg,
-        window_res_x_arg,
-        window_res_y_arg,
         stonefish_node,
         description_launch,
     ])
