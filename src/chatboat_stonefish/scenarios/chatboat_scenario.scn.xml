@@ -97,6 +97,7 @@
           <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
         </visual>
         <material name="Fiberglass"/>
+        <mass value="6.0"/>
         <look name="br2"/>
         <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
       </external_part>
@@ -113,6 +114,7 @@
           <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
         </visual>
         <material name="Fiberglass"/>
+        <mass value="3.0"/>
         <look name="black"/>
         <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
       </external_part>
@@ -151,7 +153,7 @@
         <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 0.1 0.0"/>
       </internal_part>
 
-      <!-- Ballast weights (tuned for neutral buoyancy + arm weight compensation) -->
+      <!-- Ballast weights (tuned for near-neutral buoyancy + arm weight compensation) -->
       <internal_part name="WeightCenter" type="sphere" physics="submerged" buoyant="false">
         <dimensions radius="0.01"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
