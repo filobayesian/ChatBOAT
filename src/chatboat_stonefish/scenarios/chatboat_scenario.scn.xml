@@ -69,7 +69,7 @@
     <material name="Ferromagnetic"/>
     <mass value="2.0"/>
     <look name="red"/>
-    <world_transform xyz="1.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
+    <world_transform xyz="-1.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
   </dynamic>
 
   <dynamic name="cube_b" type="box">
@@ -78,7 +78,7 @@
     <material name="Ferromagnetic"/>
     <mass value="2.0"/>
     <look name="green"/>
-    <world_transform xyz="2.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
+    <world_transform xyz="4.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
   </dynamic>
 
   <!-- ================================================================== -->
