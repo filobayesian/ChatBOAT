@@ -52,13 +52,11 @@ class VehicleMPCSolver:
         self.obstacles: list[dict] = []
         self.v_max = V_MAX_DEFAULT
         self.u_max = U_MAX_DEFAULT
-        self.lam_vel = 0.05   # velocity regularisation weight
-        self.lam_du = 0.1     # control-rate (delta-u) smoothness weight
+        self.lam_vel = 0.001  # velocity regularisation weight
 
         # Warm-start storage
         self._prev_x: np.ndarray | None = None
         self._prev_u: np.ndarray | None = None
-        self._last_u: np.ndarray | None = None  # last applied control (for delta-u)
 
     # ── Configuration ────────────────────────────────────────────────────────
 
@@ -77,7 +75,6 @@ class VehicleMPCSolver:
         # Reset warm start on new subtask
         self._prev_x = None
         self._prev_u = None
-        self._last_u = None
 
     def configure_from_mpc_config(self, config: "MPCConfig"):
         """Configure from a parsed MPCConfig dataclass."""
@@ -139,10 +136,6 @@ class VehicleMPCSolver:
         Q_ca = ca.DM(self.Q)
         R_ca = ca.DM(self.R)
 
-        # Previous applied control for delta-u at k=0
-        u_prev_ca = ca.DM(self._last_u if self._last_u is not None
-                          else np.zeros(5))
-
         for k in range(N):
             # State tracking cost
             dx = X[:, k] - x_target
@@ -150,11 +143,6 @@ class VehicleMPCSolver:
 
             # Control effort cost
             cost += ca.mtimes([U[:, k].T, R_ca, U[:, k]])
-
-            # Control smoothness (delta-u) penalty
-            u_prev = u_prev_ca if k == 0 else U[:, k - 1]
-            du = U[:, k] - u_prev
-            cost += self.lam_du * ca.dot(du, du)
 
             # Velocity regularisation (penalise high speeds)
             v = X[5:10, k]
@@ -246,14 +234,11 @@ class VehicleMPCSolver:
             x_opt = sol.value(X)
             u_opt = sol.value(U)
 
-            # Store last applied control for delta-u continuity
-            self._last_u = np.array(u_opt[:, 0]).flatten()
+            # Store for warm start
+            self._prev_x = x_opt
+            self._prev_u = u_opt
 
-            # Shifted warm start: drop first step, duplicate last
-            self._prev_x = np.hstack([x_opt[:, 1:], x_opt[:, -1:]])
-            self._prev_u = np.hstack([u_opt[:, 1:], u_opt[:, -1:]])
-
-            return self._last_u.copy(), np.array(x_opt.T)
+            return np.array(u_opt[:, 0]).flatten(), np.array(x_opt.T)
 
         except RuntimeError as e:
             print(f"[MPC] Solver failed: {e}")

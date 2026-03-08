@@ -36,9 +36,6 @@ class ROSBridge:
     Falls back gracefully when rclpy is unavailable (offline testing).
     """
 
-    # EMA smoothing factor for velocity components (0 = full filter, 1 = no filter)
-    VELOCITY_ALPHA = 0.3
-
     def __init__(self, thrust_scale: float = THRUST_SCALE):
         self._thrust_scale = thrust_scale
 
@@ -69,10 +66,7 @@ class ROSBridge:
     # ── Callbacks ────────────────────────────────────────────────────────────
 
     def _odom_cb(self, msg: "Odometry"):
-        """Convert Odometry message to 10D state vector (world frame).
-
-        Velocity components are EMA-filtered to reduce noise-induced jitter.
-        """
+        """Convert Odometry message to 10D state vector (world frame)."""
         p = msg.pose.pose.position
         q = msg.pose.pose.orientation
         v = msg.twist.twist.linear   # body-frame twist
@@ -87,20 +81,9 @@ class ROSBridge:
         vx_world = v.x * cos_yaw - v.y * sin_yaw
         vy_world = v.x * sin_yaw + v.y * cos_yaw
 
-        raw_vel = np.array([vx_world, vy_world, v.z, w.x, w.z])
-
-        # EMA filter on velocities
-        if self._latest_state is not None:
-            prev_vel = self._latest_state[5:10]
-            a = self.VELOCITY_ALPHA
-            filtered_vel = a * raw_vel + (1.0 - a) * prev_vel
-        else:
-            filtered_vel = raw_vel
-
         self._latest_state = np.array([
             p.x, p.y, p.z, roll, yaw,
-            filtered_vel[0], filtered_vel[1], filtered_vel[2],
-            filtered_vel[3], filtered_vel[4],
+            vx_world, vy_world, v.z, w.x, w.z,
         ])
 
     # ── Public API ───────────────────────────────────────────────────────────

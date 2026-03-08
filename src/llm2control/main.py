@@ -139,8 +139,11 @@ def main():
             u, trajectory = solver.solve(state)
 
             if use_ros:
-                # Use the SAME state that was passed to solver.solve()
-                # for the body-frame conversion — avoids yaw mismatch
+                ros.spin_once()  # process callbacks that arrived during solve
+                fresh = ros.get_vehicle_state()
+                if fresh is not None:
+                    state = fresh
+                # Convert world-frame acceleration to body-frame thrust
                 surge, sway = world_to_body(u[0], u[1], state[4])  # psi at index 4
                 heave = float(u[2])
                 roll_thrust = float(u[3])
