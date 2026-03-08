@@ -4,7 +4,11 @@ Uses Claude via OpenRouter (openai SDK) with tool_choice for structured output.
 """
 
 import json
+import logging
 import math
+import os
+from datetime import datetime, timezone
+from pathlib import Path
 
 from openai import OpenAI
 
@@ -20,6 +24,19 @@ from llm2control.prompts.optimization_formulator import (
     OPTIMIZATION_FORMULATOR_EXAMPLES,
 )
 from llm2control.parser import Subtask, MPCConfig, parse_subtasks, parse_mpc_config
+
+logger = logging.getLogger(__name__)
+
+# ── Audit log directory ─────────────────────────────────────────────────────
+_LOG_DIR = Path(os.environ.get("LLM_LOG_DIR", "logs"))
+
+
+def _write_audit_entry(entry: dict) -> None:
+    """Append a JSON entry to the audit log file."""
+    _LOG_DIR.mkdir(parents=True, exist_ok=True)
+    log_path = _LOG_DIR / "llm_audit.jsonl"
+    with open(log_path, "a") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
 def _objects_description(objects: list[dict]) -> str:
@@ -80,9 +97,22 @@ class LaMPCAgent:
             messages=messages,
         )
 
-        raw = json.loads(
-            response.choices[0].message.tool_calls[0].function.arguments
-        )
+        raw_args = response.choices[0].message.tool_calls[0].function.arguments
+        raw = json.loads(raw_args)
+
+        _write_audit_entry({
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "role": "task_planner",
+            "model": self.model,
+            "input": {"user_query": user_query, "vehicle_state": [x, y, z, psi]},
+            "output": raw,
+            "usage": {
+                "prompt_tokens": getattr(response.usage, "prompt_tokens", None),
+                "completion_tokens": getattr(response.usage, "completion_tokens", None),
+            },
+        })
+        logger.info("Task planner response logged to %s", _LOG_DIR / "llm_audit.jsonl")
+
         return parse_subtasks(raw)
 
     # ── Optimization Formulator ──────────────────────────────────────────────
@@ -127,9 +157,21 @@ class LaMPCAgent:
             messages=messages,
         )
 
-        raw = json.loads(
-            response.choices[0].message.tool_calls[0].function.arguments
-        )
+        raw_args = response.choices[0].message.tool_calls[0].function.arguments
+        raw = json.loads(raw_args)
+
+        _write_audit_entry({
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "role": "optimization_formulator",
+            "model": self.model,
+            "input": {"subtask": subtask.instruction, "vehicle_state": [x, y, z, psi]},
+            "output": raw,
+            "usage": {
+                "prompt_tokens": getattr(response.usage, "prompt_tokens", None),
+                "completion_tokens": getattr(response.usage, "completion_tokens", None),
+            },
+        })
+        logger.info("Optimization formulator response logged to %s", _LOG_DIR / "llm_audit.jsonl")
 
         # Handle unsupported tasks flagged by the optimization formulator
         if raw.get("problem_type") == "unsupported":

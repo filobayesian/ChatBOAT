@@ -20,5 +20,8 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# LLM audit logs
+logs/
+
 # Docker
 docker/.env
