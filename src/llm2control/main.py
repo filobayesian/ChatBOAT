@@ -14,7 +14,7 @@ import time
 import numpy as np
 
 from llm2control.agent import LaMPCAgent
-from llm2control.config import ROBOT_START, KNOWN_OBJECTS, MPC_DT
+from llm2control.config import ROBOT_START, KNOWN_OBJECTS, MPC_DT, THRUSTER_TOPIC
 from llm2control.dynamics import world_to_body, vehicle_dynamics_matrices, thruster_mixing
 from llm2control.mpc import VehicleMPCSolver
 from llm2control.ros_bridge import ROSBridge
@@ -48,21 +48,34 @@ def main():
     # Dynamics matrices for offline mode
     A_dyn, B_dyn = vehicle_dynamics_matrices(MPC_DT)
 
-    # Wait for first odometry (give simulator time to start)
-    print("Waiting for odometry...")
-    for i in range(150):  # 15 seconds
-        ros.spin_once(timeout_sec=0.1)
-        if ros.get_vehicle_state() is not None:
-            print(f"Odometry received after {(i + 1) * 0.1:.1f}s")
-            break
-    else:
+    if ros.is_offline:
+        use_ros = False
         print("\n" + "!" * 60)
-        print("No odometry received after 15s — running in MOCK mode.")
-        print("Thruster commands will NOT be published!")
-        print("Check: is the simulator running? Is /chatboat/odometry being published?")
+        print("rclpy not available — running in MOCK mode.")
+        print("Thruster commands will NOT be published.")
+        print("")
+        print("To run with ROS2, use system Python (not Poetry venv):")
+        print("  source /opt/ros/humble/setup.bash")
+        print("  source install/setup.bash")
+        print("  pip install openai numpy casadi")
+        print("  cd src && python -m llm2control.main")
         print("!" * 60 + "\n")
+    else:
+        # Wait for first odometry (give simulator time to start)
+        print("Waiting for odometry...")
+        for i in range(150):  # 15 seconds
+            ros.spin_once(timeout_sec=0.1)
+            if ros.get_vehicle_state() is not None:
+                print(f"Odometry received after {(i + 1) * 0.1:.1f}s")
+                break
+        else:
+            print("\n" + "!" * 60)
+            print("rclpy OK but no odometry after 15s — running in MOCK mode.")
+            print("Thruster commands will NOT be published!")
+            print("Check: is the simulator running? Is /chatboat/odometry being published?")
+            print("!" * 60 + "\n")
 
-    use_ros = ros.get_vehicle_state() is not None
+        use_ros = ros.get_vehicle_state() is not None
     mock_state = np.zeros(8)
     mock_state[:3] = ROBOT_START
     if not use_ros:
@@ -101,8 +114,9 @@ def main():
 
         t0 = time.time()
         step = 0
+        max_steps = int(config.timeout / MPC_DT)
 
-        while time.time() - t0 < config.timeout:
+        while (step < max_steps) if not use_ros else (time.time() - t0 < config.timeout):
             # Get current state
             if use_ros:
                 ros.spin_once()
@@ -116,6 +130,8 @@ def main():
             u, trajectory = solver.solve(state)
 
             if use_ros:
+                ros.spin_once()  # process callbacks that arrived during solve
+                state = ros.get_vehicle_state() or state
                 # Convert world-frame acceleration to body-frame thrust
                 surge, sway = world_to_body(u[0], u[1], state[3])
                 heave = float(u[2])
@@ -139,7 +155,7 @@ def main():
                           f"body=[surge={surge:.3f}, sway={sway:.3f}, heave={heave_dbg:.3f}] | "
                           f"thrusters={[f'{t:.2f}' for t in thrust_vals]}")
                 else:
-                    print(f"  t={time.time() - t0:.1f}s | "
+                    print(f"  t={step * MPC_DT:.1f}s | "
                           f"pos=({state[0]:.2f}, {state[1]:.2f}, {state[2]:.2f}) | "
                           f"err={pos_error:.3f}m | "
                           f"u=[{u[0]:.3f}, {u[1]:.3f}, {u[2]:.3f}, {u[3]:.3f}]")
@@ -150,10 +166,9 @@ def main():
 
             step += 1
             if use_ros:
-                # IPOPT solve takes ~100-500ms; only sleep the remainder
-                elapsed = time.time() - t0 - step * MPC_DT
-                sleep_time = MPC_DT - max(0.0, elapsed % MPC_DT)
-                if sleep_time > 0.01:
+                next_time = t0 + (step + 1) * MPC_DT
+                sleep_time = next_time - time.time()
+                if sleep_time > 0.001:
                     time.sleep(sleep_time)
         else:
             print(f"  Subtask {subtask.id} TIMEOUT after {config.timeout:.0f}s "

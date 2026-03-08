@@ -14,17 +14,6 @@ try:
     _HAS_ROS = True
 except ImportError:
     _HAS_ROS = False
-    print("\n" + "=" * 60)
-    print("WARNING: rclpy not found!")
-    print("The pipeline will run in OFFLINE/MOCK mode.")
-    print("No thruster commands will be published.")
-    print("")
-    print("To run with ROS2, use the system Python (not Poetry venv):")
-    print("  source /opt/ros/humble/setup.bash")
-    print("  source install/setup.bash")
-    print("  pip install openai numpy casadi")
-    print("  cd src && python -m llm2control.main")
-    print("=" * 60 + "\n")
 
 
 def _quaternion_to_yaw(q) -> float:
@@ -44,7 +33,6 @@ class ROSBridge:
         self._thrust_scale = thrust_scale
 
         if not _HAS_ROS:
-            print("[ROSBridge] rclpy not available — running in offline mode")
             self._node = None
             self._latest_state = None
             return
@@ -91,6 +79,11 @@ class ROSBridge:
         ])
 
     # ── Public API ───────────────────────────────────────────────────────────
+
+    @property
+    def is_offline(self) -> bool:
+        """True if rclpy was not available (no ROS2 connection)."""
+        return self._node is None
 
     def get_vehicle_state(self) -> np.ndarray | None:
         """Return 8D state [x,y,z,psi, dx,dy,dz,dpsi] or None."""
