@@ -146,7 +146,11 @@ class LaMPCAgent:
         messages.extend(OPTIMIZATION_FORMULATOR_EXAMPLES)
         messages.append({
             "role": "user",
-            "content": f"Subtask: {subtask.instruction}",
+            "content": (
+                f"Current vehicle state: position ({x:.2f}, {y:.2f}, {z:.2f}) m, "
+                f"yaw {math.degrees(psi):.1f}°.\n\n"
+                f"Subtask: {subtask.instruction}"
+            ),
         })
 
         response = self.client.chat.completions.create(
