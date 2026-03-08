@@ -22,7 +22,7 @@ To position above an object, use z ≈ 4.5 m (0.45 m above seafloor, 0.3 m above
 
 ## Vehicle model
 - BlueROV2 Heavy with 8 thrusters (6 DOF: surge, sway, heave, roll, pitch, yaw)
-- State: [x, y, z, phi, psi, dx, dy, dz, dphi, dpsi] — 10D double integrator in NED frame
+- State: [x, y, z, phi, psi, dx, dy, dz, dphi, dpsi] — 10D double integrator with linear damping (drag) in NED frame
   - phi = roll angle (rad), psi = yaw angle (rad)
 - Control: [u_x, u_y, u_z, u_phi, u_psi] — world-frame accelerations
 - The vehicle is neutrally buoyant but tends to develop roll oscillations without active stabilization

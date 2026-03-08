@@ -66,6 +66,22 @@ cd src && OPENROUTER_API_KEY=... python3.10 -m llm2control.main
 - MPC model uses **world-frame** velocities — must rotate body→world using yaw before storing state
 - Both `mpc_bridge.py` and `ros_bridge.py` do this conversion in their odom callbacks
 
+### MPC State & Control (10D)
+- State: `[x, y, z, phi, psi, dx, dy, dz, dphi, dpsi]` — phi (roll) at index 3, psi (yaw) at index 4
+- Control: `[u_x, u_y, u_z, u_phi, u_psi]` — 5D world-frame accelerations
+- Dynamics: damped double integrator — `v_{k+1} = (1 - d_i * dt) * v_k + dt * u_k`
+- Linear damping coefficients in `DAMPING_LINEAR` (`config.py`): surge=1.0, sway=1.0, heave=1.5, roll=0.3, yaw=0.3
+- Roll target is always 0; penalized via `Q_roll` weight in cost function
+- Vertical thrusters produce roll via differential thrust: T5/T7 (port) = heave+roll, T6/T8 (starboard) = heave-roll
+
+### MPC Problem Types
+Three problem types enforce single-axis movement to prioritize roll stabilization:
+- **`descent_ascent`**: only `u_z` + `u_phi` active — for vertical movement with roll stabilization
+- **`lateral`**: `u_x` + `u_y` + `u_phi` + `u_psi` active — for horizontal movement with orientation stabilization
+- **`general`**: all 5 controls active — legacy/fallback, avoid when possible
+- Combined vertical+horizontal movements MUST be decomposed into sequential subtasks
+- Unsupported tasks (manipulation, grasping) are rejected by task planner and optimizer
+
 ## Key Files
 - Stonefish scenario: `src/chatboat_stonefish/scenarios/chatboat_scenario.scn.xml`
 - URDF: `src/chatboat_description/urdf/chatboat_uvms.urdf.xacro`
@@ -73,9 +89,12 @@ cd src && OPENROUTER_API_KEY=... python3.10 -m llm2control.main
 - Vehicle teleop: `src/chatboat_control/chatboat_control/vehicle_teleop.py`
 - Arm teleop: `src/chatboat_control/chatboat_control/arm_teleop.py`
 - LLM agent: `src/llm2control/agent.py` (Claude via OpenRouter)
-- MPC solver: `src/llm2control/mpc.py` (CasADi/IPOPT, 8D double integrator with CBF)
-- ROS bridge: `src/llm2control/ros_bridge.py` (odom subscriber + thruster publisher)
-- Config: `src/llm2control/config.py` (topics, workspace bounds, MPC defaults, thrust scale)
+- MPC solver: `src/llm2control/mpc.py` (CasADi/IPOPT, 10D damped double integrator with CBF + roll)
+- Dynamics: `src/llm2control/dynamics.py` (10D model, thruster mixing with roll)
+- ROS bridge: `src/llm2control/ros_bridge.py` (10D odom subscriber + thruster publisher)
+- Parser: `src/llm2control/parser.py` (MPCConfig with problem_type, 10x10 Q, 5x5 R)
+- Config: `src/llm2control/config.py` (topics, workspace bounds, MPC defaults, damping coefficients, problem types, thrust scale)
+- Prompts: `src/llm2control/prompts/` (task_planner.py, optimization_formulator.py)
 
 ## ROS2 Topics
 - `/chatboat/thruster_commands` — Float64MultiArray (8 thrusters, scaled setpoints)

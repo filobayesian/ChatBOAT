@@ -3,20 +3,26 @@
 import numpy as np
 
 
-def vehicle_dynamics_matrices(dt: float):
-    """Return (A, B) for the discrete 10D double-integrator.
+def vehicle_dynamics_matrices(dt: float, damping: np.ndarray | None = None):
+    """Return (A, B) for the discrete 10D model with optional linear damping.
 
     State x = [x, y, z, phi, psi, dx, dy, dz, dphi, dpsi]
     Control u = [u_x, u_y, u_z, u_phi, u_psi]   (world-frame accelerations)
 
-    x_{k+1} = A @ x_k + B @ u_k
+    Without damping: x_{k+1} = A @ x_k + B @ u_k  (pure double integrator)
+    With damping:    velocity block decays as (1 - d_i * dt) per step
     """
     I5 = np.eye(5)
     Z5 = np.zeros((5, 5))
 
+    if damping is not None:
+        D_decay = np.diag(1.0 - np.asarray(damping) * dt)
+    else:
+        D_decay = I5  # no damping (backward compat)
+
     A = np.block([
         [I5, I5 * dt],
-        [Z5, I5],
+        [Z5, D_decay],
     ])
     B = np.block([
         [0.5 * I5 * dt**2],

@@ -14,7 +14,7 @@ import time
 import numpy as np
 
 from llm2control.agent import LaMPCAgent
-from llm2control.config import ROBOT_START, KNOWN_OBJECTS, MPC_DT, THRUSTER_TOPIC
+from llm2control.config import ROBOT_START, KNOWN_OBJECTS, MPC_DT, THRUSTER_TOPIC, DAMPING_LINEAR
 from llm2control.dynamics import world_to_body, vehicle_dynamics_matrices, thruster_mixing
 from llm2control.mpc import VehicleMPCSolver
 from llm2control.ros_bridge import ROSBridge
@@ -46,7 +46,7 @@ def main():
     agent = LaMPCAgent(api_key=api_key)
 
     # Dynamics matrices for offline mode
-    A_dyn, B_dyn = vehicle_dynamics_matrices(MPC_DT)
+    A_dyn, B_dyn = vehicle_dynamics_matrices(MPC_DT, damping=DAMPING_LINEAR)
 
     if ros.is_offline:
         use_ros = False

@@ -27,7 +27,9 @@ from llm2control.config import (
     WS_Z_MIN, WS_Z_MAX,
     V_MAX_DEFAULT, U_MAX_DEFAULT,
     COLLISION_RADIUS,
+    DAMPING_LINEAR,
 )
+from llm2control.dynamics import vehicle_dynamics_matrices
 
 VALID_PROBLEM_TYPES = {"general", "descent_ascent", "lateral"}
 
@@ -138,11 +140,8 @@ class VehicleMPCSolver:
         x_target[4] = self.target[3]         # psi (yaw target)
         # velocity targets = 0 (stop at target)
 
-        # ── Dynamics (10D double integrator) ─────────────────────────────
-        I5 = np.eye(5)
-        Z5 = np.zeros((5, 5))
-        A = np.block([[I5, I5 * dt], [Z5, I5]])
-        B = np.block([[0.5 * I5 * dt**2], [I5 * dt]])
+        # ── Dynamics (10D with linear damping) ────────────────────────────
+        A, B = vehicle_dynamics_matrices(dt, damping=DAMPING_LINEAR)
 
         # Initial condition
         opti.subject_to(X[:, 0] == x0)
@@ -176,23 +175,29 @@ class VehicleMPCSolver:
 
         # ── Constraints ──────────────────────────────────────────────────
 
-        # Problem type constraints
+        # Problem type constraints — determine which control axes are active
+        # Velocity bounds are only applied on axes with active controls,
+        # otherwise the solver cannot correct drift and declares infeasible.
         if self.problem_type == "descent_ascent":
+            active_axes = {2, 3}  # u_z, u_phi
             for k in range(N):
                 opti.subject_to(U[0, k] == 0)  # no surge
                 opti.subject_to(U[1, k] == 0)  # no sway
                 opti.subject_to(U[4, k] == 0)  # no yaw
         elif self.problem_type == "lateral":
+            active_axes = {0, 1, 3, 4}  # u_x, u_y, u_phi, u_psi
             for k in range(N):
                 opti.subject_to(U[2, k] == 0)  # no heave
+        else:
+            active_axes = {0, 1, 2, 3, 4}  # all active
 
         for k in range(N):
             # Actuation limits
             for j in range(5):
                 opti.subject_to(opti.bounded(-self.u_max, U[j, k], self.u_max))
 
-            # Velocity limits
-            for j in range(5):
+            # Velocity limits (only on axes with active controls)
+            for j in active_axes:
                 opti.subject_to(opti.bounded(-self.v_max, X[5 + j, k + 1], self.v_max))
 
             # Workspace bounds (position)

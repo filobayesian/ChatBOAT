@@ -30,6 +30,17 @@ MPC_HORIZON = 15
 V_MAX_DEFAULT = 0.5  # m/s per axis
 U_MAX_DEFAULT = 0.3  # acceleration limit (thrust fraction-ish)
 
+# ── Linear damping coefficients (normalized: deceleration per unit velocity) ─
+# v_{k+1} = (1 - d_i * dt) * v_k + dt * u_k
+# Conservative initial estimates for BlueROV2 Heavy
+DAMPING_LINEAR = np.array([
+    1.0,   # d_x  (surge)
+    1.0,   # d_y  (sway)
+    1.5,   # d_z  (heave — larger projected area)
+    0.3,   # d_phi (roll)
+    0.3,   # d_psi (yaw)
+])
+
 # ── Thrust scaling ──────────────────────────────────────────────────────────
 THRUST_SCALE = 50.0  # Stonefish setpoints: mixing [-1,1] × scale → [-50,50]
 
