@@ -45,7 +45,7 @@ class VehicleTeleop(Node):
         self._timer = self.create_timer(0.1, self._publish)
         self._surge = 0.0
         self._heave = 0.0
-        self._power = 200.0  # setpoint out of 1000
+        self._power = 10.0  # setpoint out of 1000
 
     def _publish(self):
         # BlueROV2 Heavy 8-thruster mixing
@@ -106,10 +106,10 @@ class VehicleTeleop(Node):
                     self._heave = 0.0
                     self._print_status()
                 elif key == '+' or key == '=':
-                    self._power = min(MAX_SETPOINT, self._power + 50.0)
+                    self._power = min(MAX_SETPOINT, self._power + 5.0)
                     self._print_status()
                 elif key == '-':
-                    self._power = max(50.0, self._power - 50.0)
+                    self._power = max(5.0, self._power - 5.0)
                     self._print_status()
                 rclpy.spin_once(self, timeout_sec=0)
         finally:
