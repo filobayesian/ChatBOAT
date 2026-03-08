@@ -143,7 +143,11 @@ def main():
 
             step += 1
             if use_ros:
-                time.sleep(MPC_DT)
+                # IPOPT solve takes ~100-500ms; only sleep the remainder
+                elapsed = time.time() - t0 - step * MPC_DT
+                sleep_time = MPC_DT - max(0.0, elapsed % MPC_DT)
+                if sleep_time > 0.01:
+                    time.sleep(sleep_time)
         else:
             print(f"  Subtask {subtask.id} TIMEOUT after {config.timeout:.0f}s "
                   f"(error={pos_error:.3f}m)")

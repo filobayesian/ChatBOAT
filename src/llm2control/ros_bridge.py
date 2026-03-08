@@ -60,16 +60,23 @@ class ROSBridge:
     # ── Callbacks ────────────────────────────────────────────────────────────
 
     def _odom_cb(self, msg: "Odometry"):
-        """Convert Odometry message to 8D state vector."""
+        """Convert Odometry message to 8D state vector (world frame)."""
         p = msg.pose.pose.position
         q = msg.pose.pose.orientation
-        v = msg.twist.twist.linear
+        v = msg.twist.twist.linear   # body-frame twist
         w = msg.twist.twist.angular
 
         yaw = _quaternion_to_yaw(q)
+
+        # Convert body-frame velocity to world-frame
+        cos_yaw = math.cos(yaw)
+        sin_yaw = math.sin(yaw)
+        vx_world = v.x * cos_yaw - v.y * sin_yaw
+        vy_world = v.x * sin_yaw + v.y * cos_yaw
+
         self._latest_state = np.array([
             p.x, p.y, p.z, yaw,
-            v.x, v.y, v.z, w.z,
+            vx_world, vy_world, v.z, w.z,
         ])
 
     # ── Public API ───────────────────────────────────────────────────────────

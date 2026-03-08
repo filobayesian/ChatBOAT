@@ -17,7 +17,7 @@ ROBOT_START = np.array([0.0, 0.0, 2.0])  # default spawn position (NED)
 # ── Workspace bounds ────────────────────────────────────────────────────────
 WS_X_MIN, WS_X_MAX = -10.0, 10.0
 WS_Y_MIN, WS_Y_MAX = -10.0, 10.0
-WS_Z_MIN, WS_Z_MAX = 0.5, 4.8  # stay underwater, above seafloor
+WS_Z_MIN, WS_Z_MAX = -0.5, 4.8  # allow surface operation, above seafloor
 
 # ── Vehicle geometry ─────────────────────────────────────────────────────────
 COLLISION_RADIUS = 0.25  # BlueROV2 bounding sphere (approximate)
