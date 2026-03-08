@@ -141,23 +141,22 @@
 
       <!-- Ballast weights (heavy + low for max righting moment) -->
       <!-- Buoyancy budget: 4 boxes × (0.2×0.15×0.169) × 1025 ≈ 20.8 kg -->
-      <!-- Mass budget (no arm): hull 9.0 + boxes 0.1 + weights 9.1 → ~18.2 kg -->
-      <!-- Arm removed: ~1.66 kg mass, ~2.57 kg buoyancy (net +0.9 kg buoyant) -->
-      <!-- Reduced ballast by ~0.9 kg to compensate -->
+      <!-- Mass budget (no arm): hull 9.0 + boxes 0.1 + weights 11.4 → ~20.5 kg -->
+      <!-- Target: ~0.3 kg positively buoyant (fail-safe, slight upward tendency) -->
       <internal_part name="WeightCenter" type="sphere" physics="submerged" buoyant="false">
         <dimensions radius="0.01"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="4.1"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.05 0.0 0.40"/>
+        <mass value="5.5"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.40"/>
       </internal_part>
       <internal_part name="WeightLeft" type="sphere" physics="submerged" buoyant="false">
         <dimensions radius="0.01"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="2.5"/>
+        <mass value="2.95"/>
         <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 -0.075 0.40"/>
       </internal_part>
       <internal_part name="WeightRight" type="sphere" physics="submerged" buoyant="false">
@@ -165,7 +164,7 @@
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="2.5"/>
+        <mass value="2.95"/>
         <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.075 0.40"/>
       </internal_part>
     </base_link>
