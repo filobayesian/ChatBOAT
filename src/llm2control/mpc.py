@@ -1,10 +1,15 @@
-"""8D CasADi MPC with CBF safety constraints for BlueROV2 navigation.
+"""10D CasADi MPC with CBF safety constraints for BlueROV2 navigation.
 
 Inspired by LaMPC-CBF (Song et al.): quadratic tracking cost + CBF obstacle
 avoidance constraints.
 
-State x = [x, y, z, psi, dx, dy, dz, dpsi]  (8D)
-Control u = [u_x, u_y, u_z, u_psi]           (4D, world-frame accelerations)
+State x = [x, y, z, phi, psi, dx, dy, dz, dphi, dpsi]  (10D)
+Control u = [u_x, u_y, u_z, u_phi, u_psi]               (5D, world-frame accelerations)
+
+Problem types:
+  - "general"        : full 10D, all 5 controls active (default/legacy)
+  - "descent_ascent" : only u_z and u_phi active (vertical + roll stabilisation)
+  - "lateral"        : u_x, u_y, u_phi, u_psi active (horizontal + orientation)
 """
 
 import numpy as np
@@ -24,14 +29,17 @@ from llm2control.config import (
     COLLISION_RADIUS,
 )
 
+VALID_PROBLEM_TYPES = {"general", "descent_ascent", "lateral"}
+
 
 class VehicleMPCSolver:
     """Receding-horizon MPC for BlueROV2 vehicle navigation.
 
     Uses CasADi Opti (NLP / IPOPT) with:
-    - Quadratic tracking cost (position + yaw + velocity regularisation)
+    - Quadratic tracking cost (position + roll + yaw + velocity regularisation)
     - CBF obstacle-avoidance constraints
     - Workspace & actuation bounds
+    - Problem-type-specific control constraints
     """
 
     def __init__(self, dt: float = MPC_DT, horizon: int = MPC_HORIZON):
@@ -41,14 +49,15 @@ class VehicleMPCSolver:
         self.N = horizon
 
         # Defaults (overwritten by configure())
-        self.target = np.zeros(4)
-        self.Q = np.diag([1.0] * 8)
-        self.R = np.diag([0.5] * 4)
+        self.target = np.zeros(4)       # [x, y, z, psi]
+        self.Q = np.diag([1.0] * 10)
+        self.R = np.diag([0.5] * 5)
         self.gamma = 0.15
         self.obstacles: list[dict] = []
         self.v_max = V_MAX_DEFAULT
         self.u_max = U_MAX_DEFAULT
         self.lam_vel = 0.001  # velocity regularisation weight
+        self.problem_type = "general"
 
         # Warm-start storage
         self._prev_x: np.ndarray | None = None
@@ -59,7 +68,8 @@ class VehicleMPCSolver:
     def configure(self, target: np.ndarray, Q: np.ndarray, R: np.ndarray,
                   gamma: float, obstacles: list[dict],
                   v_max: float = V_MAX_DEFAULT,
-                  u_max: float = U_MAX_DEFAULT):
+                  u_max: float = U_MAX_DEFAULT,
+                  problem_type: str = "general"):
         """Set MPC parameters (called once per subtask)."""
         self.target = np.asarray(target, dtype=float)
         self.Q = np.asarray(Q, dtype=float)
@@ -68,6 +78,12 @@ class VehicleMPCSolver:
         self.obstacles = obstacles
         self.v_max = float(v_max)
         self.u_max = float(u_max)
+        if problem_type not in VALID_PROBLEM_TYPES:
+            raise ValueError(
+                f"Unknown problem_type '{problem_type}'. "
+                f"Must be one of {VALID_PROBLEM_TYPES}"
+            )
+        self.problem_type = problem_type
         # Reset warm start on new subtask
         self._prev_x = None
         self._prev_u = None
@@ -82,6 +98,7 @@ class VehicleMPCSolver:
             obstacles=config.obstacles,
             v_max=config.velocity_limit,
             u_max=U_MAX_DEFAULT,
+            problem_type=getattr(config, "problem_type", "general"),
         )
 
     def update_gamma(self, new_gamma: float):
@@ -94,35 +111,38 @@ class VehicleMPCSolver:
 
         Parameters
         ----------
-        current_state : (8,) array [x, y, z, psi, dx, dy, dz, dpsi]
+        current_state : (10,) array [x, y, z, phi, psi, dx, dy, dz, dphi, dpsi]
 
         Returns
         -------
-        u_opt : (4,) array — first control action [u_x, u_y, u_z, u_psi]
-        x_pred : (N+1, 8) array — predicted state trajectory
+        u_opt : (5,) array — first control action [u_x, u_y, u_z, u_phi, u_psi]
+        x_pred : (N+1, 10) array — predicted state trajectory
         """
         opti = ca.Opti()
         N = self.N
         dt = self.dt
 
         # ── Decision variables ───────────────────────────────────────────
-        X = opti.variable(8, N + 1)  # states
-        U = opti.variable(4, N)      # controls
+        X = opti.variable(10, N + 1)  # states
+        U = opti.variable(5, N)       # controls
 
         # ── Parameters ───────────────────────────────────────────────────
-        x0 = opti.parameter(8)
+        x0 = opti.parameter(10)
         opti.set_value(x0, current_state)
 
-        # Full 8D target: [pos(4), vel(4)]
-        x_target = np.zeros(8)
-        x_target[:4] = self.target  # position + yaw target
-        # velocity target = 0 (stop at target)
+        # Full 10D target: [x, y, z, phi, psi, dx, dy, dz, dphi, dpsi]
+        # target is (4,) = [x, y, z, psi]; roll target is always 0
+        x_target = np.zeros(10)
+        x_target[0:3] = self.target[0:3]   # x, y, z
+        x_target[3] = 0.0                   # phi = 0 (roll target)
+        x_target[4] = self.target[3]         # psi (yaw target)
+        # velocity targets = 0 (stop at target)
 
-        # ── Dynamics (8D double integrator) ──────────────────────────────
-        I4 = np.eye(4)
-        Z4 = np.zeros((4, 4))
-        A = np.block([[I4, I4 * dt], [Z4, I4]])
-        B = np.block([[0.5 * I4 * dt**2], [I4 * dt]])
+        # ── Dynamics (10D double integrator) ─────────────────────────────
+        I5 = np.eye(5)
+        Z5 = np.zeros((5, 5))
+        A = np.block([[I5, I5 * dt], [Z5, I5]])
+        B = np.block([[0.5 * I5 * dt**2], [I5 * dt]])
 
         # Initial condition
         opti.subject_to(X[:, 0] == x0)
@@ -137,11 +157,11 @@ class VehicleMPCSolver:
             dx = X[:, k] - x_target
             cost += ca.mtimes([dx.T, Q_ca, dx])
 
-            # Control effort cost (penalise delta-u if we have previous)
+            # Control effort cost
             cost += ca.mtimes([U[:, k].T, R_ca, U[:, k]])
 
             # Velocity regularisation (penalise high speeds)
-            v = X[4:8, k]
+            v = X[5:10, k]
             cost += self.lam_vel * ca.dot(v, v)
 
             # Dynamics constraint
@@ -156,14 +176,24 @@ class VehicleMPCSolver:
 
         # ── Constraints ──────────────────────────────────────────────────
 
+        # Problem type constraints
+        if self.problem_type == "descent_ascent":
+            for k in range(N):
+                opti.subject_to(U[0, k] == 0)  # no surge
+                opti.subject_to(U[1, k] == 0)  # no sway
+                opti.subject_to(U[4, k] == 0)  # no yaw
+        elif self.problem_type == "lateral":
+            for k in range(N):
+                opti.subject_to(U[2, k] == 0)  # no heave
+
         for k in range(N):
             # Actuation limits
-            for j in range(4):
+            for j in range(5):
                 opti.subject_to(opti.bounded(-self.u_max, U[j, k], self.u_max))
 
             # Velocity limits
-            for j in range(4):
-                opti.subject_to(opti.bounded(-self.v_max, X[4 + j, k + 1], self.v_max))
+            for j in range(5):
+                opti.subject_to(opti.bounded(-self.v_max, X[5 + j, k + 1], self.v_max))
 
             # Workspace bounds (position)
             opti.subject_to(opti.bounded(WS_X_MIN, X[0, k + 1], WS_X_MAX))
@@ -216,4 +246,4 @@ class VehicleMPCSolver:
         except RuntimeError as e:
             print(f"[MPC] Solver failed: {e}")
             # Return zero control on failure
-            return np.zeros(4), None
+            return np.zeros(5), None

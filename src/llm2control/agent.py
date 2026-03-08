@@ -50,14 +50,15 @@ class LaMPCAgent:
         Parameters
         ----------
         user_query : natural-language navigation command
-        vehicle_state : optional (8,) array; uses ROBOT_START if None
+        vehicle_state : optional (10,) array; uses ROBOT_START if None
 
         Returns
         -------
         list[Subtask]
         """
         if vehicle_state is not None:
-            x, y, z, psi = vehicle_state[0], vehicle_state[1], vehicle_state[2], vehicle_state[3]
+            x, y, z = vehicle_state[0], vehicle_state[1], vehicle_state[2]
+            psi = vehicle_state[4]  # 10D: [x,y,z,phi,psi,...]
         else:
             x, y, z = ROBOT_START
             psi = 0.0
@@ -93,14 +94,15 @@ class LaMPCAgent:
         Parameters
         ----------
         subtask : the subtask to formulate
-        vehicle_state : optional (8,) array; uses ROBOT_START if None
+        vehicle_state : optional (10,) array; uses ROBOT_START if None
 
         Returns
         -------
         MPCConfig
         """
         if vehicle_state is not None:
-            x, y, z, psi = vehicle_state[0], vehicle_state[1], vehicle_state[2], vehicle_state[3]
+            x, y, z = vehicle_state[0], vehicle_state[1], vehicle_state[2]
+            psi = vehicle_state[4]  # 10D: [x,y,z,phi,psi,...]
         else:
             x, y, z = ROBOT_START
             psi = 0.0
@@ -128,4 +130,12 @@ class LaMPCAgent:
         raw = json.loads(
             response.choices[0].message.tool_calls[0].function.arguments
         )
+
+        # Handle unsupported tasks flagged by the optimization formulator
+        if raw.get("problem_type") == "unsupported":
+            raise ValueError(
+                f"Optimization Formulator marked subtask as unsupported: "
+                f"{subtask.instruction}"
+            )
+
         return parse_mpc_config(raw)

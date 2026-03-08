@@ -10,7 +10,9 @@ ODOMETRY_TOPIC = "/chatboat/odometry"
 CUBE_A_POS = np.array([1.0, 0.0, 4.95])  # Red cube (NED frame)
 CUBE_B_POS = np.array([2.0, 0.0, 4.95])  # Green cube
 CUBE_RADIUS = 0.07  # half-diagonal of 0.1m cube ≈ 0.07m bounding sphere
-SEAFLOOR_Z = 5.0  # top of the seafloor box
+SURFACE_Z = 0.0    # water surface in NED
+SEAFLOOR_Z = 5.0   # top of the seafloor box
+WATER_DEPTH = 5.0   # total water column depth
 
 ROBOT_START = np.array([0.0, 0.0, 2.0])  # default spawn position (NED)
 
@@ -36,3 +38,9 @@ KNOWN_OBJECTS = [
     {"name": "red_cube", "position": CUBE_A_POS.tolist(), "radius": CUBE_RADIUS},
     {"name": "green_cube", "position": CUBE_B_POS.tolist(), "radius": CUBE_RADIUS},
 ]
+
+# ── MPC Problem Types ────────────────────────────────────────────────────
+PROBLEM_TYPE_GENERAL = "general"        # original 8D behavior (legacy)
+PROBLEM_TYPE_DESCENT = "descent_ascent" # vertical movement + roll stabilization
+PROBLEM_TYPE_LATERAL = "lateral"        # horizontal movement + orientation stabilization
+VALID_PROBLEM_TYPES = {PROBLEM_TYPE_GENERAL, PROBLEM_TYPE_DESCENT, PROBLEM_TYPE_LATERAL}

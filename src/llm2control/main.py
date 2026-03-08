@@ -76,10 +76,10 @@ def main():
             print("!" * 60 + "\n")
 
         use_ros = ros.get_vehicle_state() is not None
-    mock_state = np.zeros(8)
-    mock_state[:3] = ROBOT_START
+    mock_state = np.zeros(10)
+    mock_state[:3] = ROBOT_START  # x, y, z; phi=0, psi=0, all velocities=0
     if not use_ros:
-        print(f"Mock start state: {mock_state[:4]}")
+        print(f"Mock start state: {mock_state[:5]}")
     else:
         print(f"ROS mode active — publishing to {THRUSTER_TOPIC}")
 
@@ -102,9 +102,18 @@ def main():
 
     # ── Execute subtasks ─────────────────────────────────────────────────
     for subtask in subtasks:
+        if subtask.type == "unsupported":
+            print(f"\n  Subtask {subtask.id} UNSUPPORTED: {subtask.instruction}")
+            print(f"  Skipping — this task requires capabilities beyond the current MPC primitives.")
+            continue
+
         state = ros.get_vehicle_state() if use_ros else mock_state
         print(f"\n[Optimizer] Configuring MPC for subtask {subtask.id}...")
-        config = agent.formulate_optimization(subtask, vehicle_state=state)
+        try:
+            config = agent.formulate_optimization(subtask, vehicle_state=state)
+        except ValueError as e:
+            print(f"  Subtask {subtask.id} REJECTED: {e}")
+            continue
 
         print(f"  Target: {config.target}")
         print(f"  Gamma: {config.gamma}, V_max: {config.velocity_limit}")
@@ -135,10 +144,11 @@ def main():
                 if fresh is not None:
                     state = fresh
                 # Convert world-frame acceleration to body-frame thrust
-                surge, sway = world_to_body(u[0], u[1], state[3])
+                surge, sway = world_to_body(u[0], u[1], state[4])  # psi at index 4
                 heave = float(u[2])
-                yaw_thrust = float(u[3])
-                ros.send_thruster_command(surge, sway, heave, yaw_thrust)
+                roll_thrust = float(u[3])
+                yaw_thrust = float(u[4])
+                ros.send_thruster_command(surge, sway, heave, roll_thrust, yaw_thrust)
             else:
                 # Mock state propagation
                 mock_state = A_dyn @ mock_state + B_dyn @ u
@@ -147,20 +157,22 @@ def main():
             pos_error = np.linalg.norm(state[:3] - config.target[:3])
             if step % 10 == 0:
                 if use_ros:
-                    surge, sway = world_to_body(u[0], u[1], state[3])
+                    surge, sway = world_to_body(u[0], u[1], state[4])
                     heave_dbg = float(u[2])
-                    thrust_vals = thruster_mixing(surge, sway, heave_dbg, float(u[3]))
+                    roll_dbg = float(u[3])
+                    yaw_dbg = float(u[4])
+                    thrust_vals = thruster_mixing(surge, sway, heave_dbg, roll_dbg, yaw_dbg)
                     print(f"  t={time.time() - t0:.1f}s | "
                           f"pos=({state[0]:.2f}, {state[1]:.2f}, {state[2]:.2f}) | "
                           f"err={pos_error:.3f}m | "
-                          f"u_world=[{u[0]:.3f}, {u[1]:.3f}, {u[2]:.3f}, {u[3]:.3f}] | "
+                          f"u_world=[{u[0]:.3f}, {u[1]:.3f}, {u[2]:.3f}, {u[3]:.3f}, {u[4]:.3f}] | "
                           f"body=[surge={surge:.3f}, sway={sway:.3f}, heave={heave_dbg:.3f}] | "
                           f"thrusters={[f'{t:.2f}' for t in thrust_vals]}")
                 else:
                     print(f"  t={step * MPC_DT:.1f}s | "
                           f"pos=({state[0]:.2f}, {state[1]:.2f}, {state[2]:.2f}) | "
                           f"err={pos_error:.3f}m | "
-                          f"u=[{u[0]:.3f}, {u[1]:.3f}, {u[2]:.3f}, {u[3]:.3f}]")
+                          f"u=[{u[0]:.3f}, {u[1]:.3f}, {u[2]:.3f}, {u[3]:.3f}, {u[4]:.3f}]")
 
             if pos_error < config.completion_threshold:
                 print(f"  Subtask {subtask.id} COMPLETE (error={pos_error:.3f}m)")

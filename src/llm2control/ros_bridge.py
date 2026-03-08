@@ -23,6 +23,13 @@ def _quaternion_to_yaw(q) -> float:
     return math.atan2(siny_cosp, cosy_cosp)
 
 
+def _quaternion_to_roll(q) -> float:
+    """Extract roll from quaternion (x, y, z, w)."""
+    sinr_cosp = 2.0 * (q.w * q.x + q.y * q.z)
+    cosr_cosp = 1.0 - 2.0 * (q.x * q.x + q.y * q.y)
+    return math.atan2(sinr_cosp, cosr_cosp)
+
+
 class ROSBridge:
     """Thin wrapper around rclpy for odometry reading and thruster publishing.
 
@@ -59,12 +66,13 @@ class ROSBridge:
     # ── Callbacks ────────────────────────────────────────────────────────────
 
     def _odom_cb(self, msg: "Odometry"):
-        """Convert Odometry message to 8D state vector (world frame)."""
+        """Convert Odometry message to 10D state vector (world frame)."""
         p = msg.pose.pose.position
         q = msg.pose.pose.orientation
         v = msg.twist.twist.linear   # body-frame twist
         w = msg.twist.twist.angular
 
+        roll = _quaternion_to_roll(q)
         yaw = _quaternion_to_yaw(q)
 
         # Convert body-frame velocity to world-frame
@@ -74,8 +82,8 @@ class ROSBridge:
         vy_world = v.x * sin_yaw + v.y * cos_yaw
 
         self._latest_state = np.array([
-            p.x, p.y, p.z, yaw,
-            vx_world, vy_world, v.z, w.z,
+            p.x, p.y, p.z, roll, yaw,
+            vx_world, vy_world, v.z, w.x, w.z,
         ])
 
     # ── Public API ───────────────────────────────────────────────────────────
@@ -86,15 +94,15 @@ class ROSBridge:
         return self._node is None
 
     def get_vehicle_state(self) -> np.ndarray | None:
-        """Return 8D state [x,y,z,psi, dx,dy,dz,dpsi] or None."""
+        """Return 10D state [x,y,z,phi,psi, dx,dy,dz,dphi,dpsi] or None."""
         return self._latest_state
 
     def send_thruster_command(self, surge: float, sway: float,
-                              heave: float, yaw: float):
+                              heave: float, roll: float, yaw: float):
         """Apply mixing matrix, scale for Stonefish, and publish."""
         if self._node is None:
             return
-        values = thruster_mixing(surge, sway, heave, yaw)
+        values = thruster_mixing(surge, sway, heave, roll, yaw)
         scaled = [v * self._thrust_scale for v in values]
         msg = Float64MultiArray()
         msg.data = scaled
