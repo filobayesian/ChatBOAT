@@ -191,6 +191,29 @@ class VehicleMPCSolver:
         else:
             active_axes = {0, 1, 2, 3, 4}  # all active
 
+        # ── Adaptive per-axis velocity bounds ──────────────────────────
+        # The configured v_max may be infeasible when the initial state
+        # has velocities that cannot be brought within bounds in one step
+        # (given damping and u_max).  Compute the minimum feasible bound
+        # for each active axis:
+        #   1. Self-consistency: bound >= dt*u_max / (1 - decay)
+        #      so that any velocity within bounds stays within bounds.
+        #   2. Initial-state feasibility: bound >= decay*|v0| - dt*u_max
+        #      so the very first prediction step is achievable.
+        v_bounds = np.full(5, self.v_max)
+        for j in active_axes:
+            decay_j = 1.0 - DAMPING_LINEAR[j] * dt
+            # Self-consistency
+            denom = 1.0 - decay_j
+            if denom > 1e-6:
+                ss = dt * self.u_max / denom
+                v_bounds[j] = max(v_bounds[j], ss + 0.05)
+            # First-step feasibility
+            v_init = abs(current_state[5 + j])
+            min_needed = decay_j * v_init - dt * self.u_max
+            if min_needed > v_bounds[j]:
+                v_bounds[j] = min_needed + 0.05
+
         for k in range(N):
             # Actuation limits
             for j in range(5):
@@ -198,7 +221,7 @@ class VehicleMPCSolver:
 
             # Velocity limits (only on axes with active controls)
             for j in active_axes:
-                opti.subject_to(opti.bounded(-self.v_max, X[5 + j, k + 1], self.v_max))
+                opti.subject_to(opti.bounded(-v_bounds[j], X[5 + j, k + 1], v_bounds[j]))
 
             # Workspace bounds (position)
             opti.subject_to(opti.bounded(WS_X_MIN, X[0, k + 1], WS_X_MAX))
