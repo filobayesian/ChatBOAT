@@ -28,6 +28,9 @@ MPC_HORIZON = 15
 V_MAX_DEFAULT = 0.5  # m/s per axis
 U_MAX_DEFAULT = 0.3  # acceleration limit (thrust fraction-ish)
 
+# ── Thrust scaling ──────────────────────────────────────────────────────────
+THRUST_SCALE = 50.0  # Stonefish setpoints: mixing [-1,1] × scale → [-50,50]
+
 # ── Known objects (for scene description sent to LLM) ────────────────────────
 KNOWN_OBJECTS = [
     {"name": "red_cube", "position": CUBE_A_POS.tolist(), "radius": CUBE_RADIUS},

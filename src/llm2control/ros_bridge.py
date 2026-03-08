@@ -3,7 +3,7 @@
 import math
 import numpy as np
 
-from llm2control.config import THRUSTER_TOPIC, ODOMETRY_TOPIC
+from llm2control.config import THRUSTER_TOPIC, ODOMETRY_TOPIC, THRUST_SCALE
 from llm2control.dynamics import thruster_mixing
 
 try:
@@ -29,7 +29,9 @@ class ROSBridge:
     Falls back gracefully when rclpy is unavailable (offline testing).
     """
 
-    def __init__(self):
+    def __init__(self, thrust_scale: float = THRUST_SCALE):
+        self._thrust_scale = thrust_scale
+
         if not _HAS_ROS:
             print("[ROSBridge] rclpy not available — running in offline mode")
             self._node = None
@@ -52,7 +54,8 @@ class ROSBridge:
             Float64MultiArray, THRUSTER_TOPIC, 10
         )
 
-        self._node.get_logger().info("ROSBridge ready")
+        self._node.get_logger().info(
+            f"ROSBridge ready (thrust_scale={self._thrust_scale})")
 
     # ── Callbacks ────────────────────────────────────────────────────────────
 
@@ -77,20 +80,30 @@ class ROSBridge:
 
     def send_thruster_command(self, surge: float, sway: float,
                               heave: float, yaw: float):
-        """Apply mixing matrix, clamp, and publish."""
+        """Apply mixing matrix, scale for Stonefish, and publish."""
         if self._node is None:
             return
         values = thruster_mixing(surge, sway, heave, yaw)
+        scaled = [v * self._thrust_scale for v in values]
         msg = Float64MultiArray()
-        msg.data = values
+        msg.data = scaled
         self._thruster_pub.publish(msg)
 
     def spin_once(self, timeout_sec: float = 0.01):
         if self._node is not None:
             rclpy.spin_once(self._node, timeout_sec=timeout_sec)
 
+    def zero_thrust(self):
+        """Publish zero thrust to all thrusters (safety stop)."""
+        if self._node is None:
+            return
+        msg = Float64MultiArray()
+        msg.data = [0.0] * 8
+        self._thruster_pub.publish(msg)
+
     def shutdown(self):
         if self._node is not None:
+            self.zero_thrust()
             self._node.destroy_node()
             if rclpy.ok():
                 rclpy.shutdown()

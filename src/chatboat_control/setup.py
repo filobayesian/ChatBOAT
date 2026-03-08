@@ -26,6 +26,7 @@ setup(
             'gripper_service = chatboat_control.gripper_service:main',
             'arm_teleop = chatboat_control.arm_teleop:main',
             'vehicle_teleop = chatboat_control.vehicle_teleop:main',
+            'mpc_bridge = chatboat_control.mpc_bridge:main',
         ],
     },
 )

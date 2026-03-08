@@ -28,9 +28,11 @@ Vehicle Teleop - Keyboard Control
 
   Space      : stop all
   +/-        : adjust power
+  R/F        : adjust roll compensation
   Q          : quit
 
-Power: {power:.0f}   Surge: {surge:+.0f}   Heave: {heave:+.0f}
+Power: {power:.0f}   Roll comp: {roll:.2f}
+Surge: {surge:+.0f}   Heave: {heave:+.0f}
 """
 
 # Stonefish thrusters have max_setpoint=1000, quadratic thrust model
@@ -46,19 +48,30 @@ class VehicleTeleop(Node):
         self._surge = 0.0
         self._heave = 0.0
         self._power = 10.0  # setpoint out of 1000
+        self._roll_comp = 0.15  # roll compensation factor (tunable)
 
     def _publish(self):
         # BlueROV2 Heavy 8-thruster mixing
         surge = self._surge
         heave = self._heave
+
+        # Horizontal thrusters at ±45° angles
         t1 = surge    # FrontRight
         t2 = surge    # FrontLeft
         t3 = -surge   # BackRight
         t4 = -surge   # BackLeft
-        t5 = heave
-        t6 = heave
-        t7 = heave
-        t8 = heave
+
+        # Vertical thrusters with roll compensation
+        # Propeller reaction torques during surge all project positively
+        # onto the roll axis → robot rolls starboard-down.
+        # Counter by: starboard thrusters push UP, port push DOWN.
+        # DFR/DBR are starboard (y>0), DFL/DBL are port (y<0).
+        roll_comp = self._roll_comp * surge
+        t5 = heave - roll_comp   # DFR (starboard) — less down
+        t6 = heave + roll_comp   # DFL (port) — more down
+        t7 = heave - roll_comp   # DBR (starboard) — less down
+        t8 = heave + roll_comp   # DBL (port) — more down
+
         msg = Float64MultiArray()
         msg.data = [max(-MAX_SETPOINT, min(MAX_SETPOINT, t))
                      for t in [t1, t2, t3, t4, t5, t6, t7, t8]]
@@ -111,6 +124,12 @@ class VehicleTeleop(Node):
                 elif key == '-':
                     self._power = max(5.0, self._power - 5.0)
                     self._print_status()
+                elif key in ('r', 'R'):
+                    self._roll_comp += 0.05
+                    self._print_status()
+                elif key in ('f', 'F'):
+                    self._roll_comp -= 0.05
+                    self._print_status()
                 rclpy.spin_once(self, timeout_sec=0)
         finally:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
@@ -118,7 +137,8 @@ class VehicleTeleop(Node):
     def _print_status(self):
         sys.stdout.write('\033[2J\033[H')
         sys.stdout.write(HELP.format(
-            power=self._power, surge=self._surge, heave=self._heave))
+            power=self._power, roll=self._roll_comp,
+            surge=self._surge, heave=self._heave))
         sys.stdout.flush()
 
 
