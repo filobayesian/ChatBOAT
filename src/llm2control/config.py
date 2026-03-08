@@ -7,8 +7,8 @@ THRUSTER_TOPIC = "/chatboat/thruster_commands"
 ODOMETRY_TOPIC = "/chatboat/odometry"
 
 # ── Scene ────────────────────────────────────────────────────────────────────
-CUBE_A_POS = np.array([1.0, 0.0, 4.95])  # Red cube (NED frame)
-CUBE_B_POS = np.array([2.0, 0.0, 4.95])  # Green cube
+CUBE_A_POS = np.array([-1.0, 0.0, 4.95])  # Red cube (NED frame)
+CUBE_B_POS = np.array([4.0, 0.0, 4.95])  # Green cube
 CUBE_RADIUS = 0.07  # half-diagonal of 0.1m cube ≈ 0.07m bounding sphere
 SURFACE_Z = 0.0    # water surface in NED
 SEAFLOOR_Z = 5.0   # top of the seafloor box

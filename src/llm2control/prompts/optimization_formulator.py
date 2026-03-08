@@ -148,8 +148,8 @@ OPTIMIZATION_FORMULATOR_EXAMPLES = [
     {
         "role": "user",
         "content": (
-            "Subtask: Navigate to position (1.0, 0.0) at depth 4.5 m, "
-            "above the red cube at (1.0, 0.0, 4.95)."
+            "Subtask: Navigate to position (-1.0, 0.0) at depth 4.5 m, "
+            "above the red cube at (-1.0, 0.0, 4.95)."
         ),
     },
     {
@@ -162,11 +162,11 @@ OPTIMIZATION_FORMULATOR_EXAMPLES = [
                 "function": {
                     "name": "configure_mpc",
                     "arguments": (
-                        '{"vehicle_target": [1.0, 0.0, 4.5, 0.0], '
+                        '{"vehicle_target": [-1.0, 0.0, 4.5, 0.0], '
                         '"weights": {"Q_pos": 5.0, "Q_roll": 6.0, "Q_yaw": 0.3, '
                         '"Q_vel": 0.001, "R_lin": 1.0, "R_rot": 0.1}, '
                         '"gamma": 0.065, '
-                        '"obstacles": [{"name": "red_cube", "position": [1.0, 0.0, 4.95], '
+                        '"obstacles": [{"name": "red_cube", "position": [-1.0, 0.0, 4.95], '
                         '"radius": 0.32}], '
                         '"velocity_limit": 0.4, '
                         '"completion_threshold": 0.15, '

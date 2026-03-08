@@ -102,7 +102,7 @@ TASK_PLANNER_EXAMPLES = [
                 "type": "function",
                 "function": {
                     "name": "plan_subtasks",
-                    "arguments": '{"subtasks": [{"id": 1, "instruction": "Navigate to position (1.0, 0.0) at depth 4.5 m, above the red cube at (1.0, 0.0, 4.95)", "type": "navigate"}, {"id": 2, "instruction": "Navigate to position (2.0, 0.0) at depth 4.5 m, above the green cube at (2.0, 0.0, 4.95)", "type": "navigate"}, {"id": 3, "instruction": "Return to start position (0.0, 0.0) at depth 2.0 m", "type": "return_home"}]}',
+                    "arguments": '{"subtasks": [{"id": 1, "instruction": "Navigate to position (-1.0, 0.0) at depth 4.5 m, above the red cube at (-1.0, 0.0, 4.95)", "type": "navigate"}, {"id": 2, "instruction": "Navigate to position (4.0, 0.0) at depth 4.5 m, above the green cube at (4.0, 0.0, 4.95)", "type": "navigate"}, {"id": 3, "instruction": "Return to start position (0.0, 0.0) at depth 2.0 m", "type": "return_home"}]}',
                 },
             }
         ],
