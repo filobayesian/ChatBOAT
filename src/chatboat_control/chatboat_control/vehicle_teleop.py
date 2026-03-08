@@ -30,8 +30,11 @@ Vehicle Teleop - Keyboard Control
   +/-        : adjust power
   Q          : quit
 
-Power: {power:.1f}   Surge: {surge:+.1f}   Heave: {heave:+.1f}
+Power: {power:.0f}   Surge: {surge:+.0f}   Heave: {heave:+.0f}
 """
+
+# Stonefish thrusters have max_setpoint=1000, quadratic thrust model
+MAX_SETPOINT = 1000.0
 
 
 class VehicleTeleop(Node):
@@ -42,10 +45,10 @@ class VehicleTeleop(Node):
         self._timer = self.create_timer(0.1, self._publish)
         self._surge = 0.0
         self._heave = 0.0
-        self._power = 0.3
+        self._power = 200.0  # setpoint out of 1000
 
     def _publish(self):
-        # BlueROV2 Heavy 8-thruster mixing (same as test_commander)
+        # BlueROV2 Heavy 8-thruster mixing
         surge = self._surge
         heave = self._heave
         t1 = surge    # FrontRight
@@ -57,7 +60,7 @@ class VehicleTeleop(Node):
         t7 = heave
         t8 = heave
         msg = Float64MultiArray()
-        msg.data = [max(-1.0, min(1.0, t))
+        msg.data = [max(-MAX_SETPOINT, min(MAX_SETPOINT, t))
                      for t in [t1, t2, t3, t4, t5, t6, t7, t8]]
         self._pub.publish(msg)
 
@@ -103,10 +106,10 @@ class VehicleTeleop(Node):
                     self._heave = 0.0
                     self._print_status()
                 elif key == '+' or key == '=':
-                    self._power = min(1.0, self._power + 0.1)
+                    self._power = min(MAX_SETPOINT, self._power + 50.0)
                     self._print_status()
                 elif key == '-':
-                    self._power = max(0.1, self._power - 0.1)
+                    self._power = max(50.0, self._power - 50.0)
                     self._print_status()
                 rclpy.spin_once(self, timeout_sec=0)
         finally:
