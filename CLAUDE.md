@@ -66,18 +66,15 @@ cd src && OPENROUTER_API_KEY=... python3.10 -m llm2control.main
 - MPC model uses **world-frame** velocities — must rotate body→world using yaw before storing state
 - Both `mpc_bridge.py` and `ros_bridge.py` do this conversion in their odom callbacks
 
-### MPC State & Control (10D)
+### MPC (10D)
 - State: `[x, y, z, phi, psi, dx, dy, dz, dphi, dpsi]` — phi (roll) at index 3, psi (yaw) at index 4
-- Control: `[u_x, u_y, u_z, u_phi, u_psi]` — 5D world-frame accelerations
+- Control: `[u_x, u_y, u_z, u_phi, u_psi]` — 5D world-frame accelerations, all always active
 - Dynamics: damped double integrator — `v_{k+1} = (1 - d_i * dt) * v_k + dt * u_k`
 - Linear damping coefficients in `DAMPING_LINEAR` (`config.py`): surge=1.0, sway=1.0, heave=1.5, roll=0.3, yaw=0.3
-- Roll target is always 0; penalized via `Q_roll` weight in cost function
-- Vertical thrusters produce roll via differential thrust: T5/T7 (port) = heave+roll, T6/T8 (starboard) = heave-roll
-
-### MPC Control
-- All 5 controls are always active — no axis restrictions
-- Roll stabilisation is handled via `Q_roll` weight in cost function (typical: 3.0–8.0)
-- The controller handles simultaneous 3D navigation + roll stabilisation
+- Roll target is always 0; stabilised via `Q_roll` weight in cost function (typical: 3.0–8.0)
+- The controller handles simultaneous 3D navigation + roll stabilisation — no axis restrictions
+- Vertical thruster mixing must pre-negate setpoints for Stonefish `inverted` thrusters:
+  - T5 DFR (inverted=false): `heave+roll`, T6 DFL (inverted=true): `-(heave-roll)`, T7 DBR (inverted=true): `-(heave+roll)`, T8 DBL (inverted=false): `heave-roll`
 - Unsupported tasks (manipulation, grasping) are rejected by task planner and optimizer
 
 ## Key Files
