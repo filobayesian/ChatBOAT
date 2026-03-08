@@ -37,14 +37,6 @@ def generate_launch_description():
         ),
     )
 
-    # Gripper service (always runs)
-    gripper_service = Node(
-        package='chatboat_control',
-        executable='gripper_service',
-        name='gripper_service',
-        output='screen',
-    )
-
     # Test commander (only if run_demo=true)
     test_commander = Node(
         package='chatboat_control',
@@ -90,7 +82,6 @@ def generate_launch_description():
         use_rviz_arg,
         use_mpc_arg,
         simulation_launch,
-        gripper_service,
         test_commander,
         mpc_bridge,
         rviz_node,

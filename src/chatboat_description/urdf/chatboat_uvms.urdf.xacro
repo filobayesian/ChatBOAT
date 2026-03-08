@@ -1,11 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="chatboat_uvms">
 
-  <!-- Composite UVMS: BlueROV2 Heavy + Reach Alpha 5 + Gripper -->
+  <!-- BlueROV2 Heavy only (no arm) — stability test -->
 
   <xacro:include filename="$(find chatboat_description)/urdf/bluerov2.urdf.xacro"/>
-  <xacro:include filename="$(find chatboat_description)/urdf/alpha5.urdf.xacro"/>
-  <xacro:include filename="$(find chatboat_description)/urdf/gripper.urdf.xacro"/>
 
   <xacro:arg name="namespace" default="chatboat"/>
 
@@ -18,11 +16,5 @@
 
   <!-- Instantiate vehicle -->
   <xacro:bluerov2 namespace="$(arg namespace)"/>
-
-  <!-- Instantiate arm (mounted at front of vehicle) -->
-  <xacro:alpha5 parent="$(arg namespace)/base_link" namespace="$(arg namespace)"/>
-
-  <!-- Instantiate gripper (at end of arm) -->
-  <xacro:gripper parent="arm_tcp_adapter"/>
 
 </robot>

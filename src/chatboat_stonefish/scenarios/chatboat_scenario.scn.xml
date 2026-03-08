@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  ChatBOAT UVMS Scenario: BlueROV2 Heavy + Reach Alpha 5 arm + magnetic gripper
+  ChatBOAT Scenario: BlueROV2 Heavy only (no arm) — stability test
   Stonefish simulator scenario file
 -->
 <scenario>
@@ -62,32 +62,13 @@
     <world_transform xyz="0.0 0.0 5.5" rpy="0.0 0.0 0.0"/>
   </static>
 
-  <!-- Manipulation targets -->
-  <dynamic name="cube_a" type="box">
-    <dimensions xyz="0.1 0.1 0.1"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-    <material name="Ferromagnetic"/>
-    <mass value="2.0"/>
-    <look name="red"/>
-    <world_transform xyz="-1.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
-  </dynamic>
-
-  <dynamic name="cube_b" type="box">
-    <dimensions xyz="0.1 0.1 0.1"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-    <material name="Ferromagnetic"/>
-    <mass value="2.0"/>
-    <look name="green"/>
-    <world_transform xyz="4.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
-  </dynamic>
-
   <!-- ================================================================== -->
-  <!-- ROBOT: BlueROV2 Heavy + Reach Alpha 5 + Magnetic Gripper           -->
+  <!-- ROBOT: BlueROV2 Heavy (no arm)                                    -->
   <!-- ================================================================== -->
   <robot name="chatboat" fixed="false" self_collisions="false">
 
     <!-- ============================================================== -->
-    <!-- VEHICLE BODY: BlueROV2 Heavy compound hull                     -->
+    <!-- VEHICLE BODY: BlueROV2 Heavy compound hull (no arm)            -->
     <!-- ============================================================== -->
     <base_link name="base_link" type="compound" physics="submerged">
       <!-- Main hull (visual: detailed mesh, physical: simplified mesh) -->
@@ -160,13 +141,15 @@
 
       <!-- Ballast weights (heavy + low for max righting moment) -->
       <!-- Buoyancy budget: 4 boxes × (0.2×0.15×0.169) × 1025 ≈ 20.8 kg -->
-      <!-- Mass budget: hull 9.0 + boxes 0.1 + arm ~1.7 + weights 10.0 → ~20.8 kg -->
+      <!-- Mass budget (no arm): hull 9.0 + boxes 0.1 + weights 9.1 → ~18.2 kg -->
+      <!-- Arm removed: ~1.66 kg mass, ~2.57 kg buoyancy (net +0.9 kg buoyant) -->
+      <!-- Reduced ballast by ~0.9 kg to compensate -->
       <internal_part name="WeightCenter" type="sphere" physics="submerged" buoyant="false">
         <dimensions radius="0.01"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="5.0"/>
+        <mass value="4.1"/>
         <compound_transform rpy="0.0 0.0 0.0" xyz="-0.05 0.0 0.40"/>
       </internal_part>
       <internal_part name="WeightLeft" type="sphere" physics="submerged" buoyant="false">
@@ -187,122 +170,6 @@
       </internal_part>
     </base_link>
 
-    <!-- ============================================================== -->
-    <!-- MANIPULATOR ARM: Reach Alpha 5 (4 revolute DOF + gripper)      -->
-    <!-- Cylinder primitives (known working baseline)                   -->
-    <!-- ============================================================== -->
-
-    <!-- Arm base adapter (URDF: base_link, RS1-1010) -->
-    <link name="arm_base" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.130"/>
-      <origin xyz="-0.055 0.0 0.0" rpy="0.0 1.5708 0.0"/>
-      <material name="Aluminium"/>
-      <mass value="0.234"/>
-      <look name="arm_dark"/>
-    </link>
-    <joint name="arm_base_joint" type="fixed">
-      <parent name="base_link"/>
-      <child name="arm_base"/>
-      <origin xyz="0.18 0.0 0.08" rpy="0.0 0.0 0.0"/>
-    </joint>
-
-    <!-- Inline actuator (URDF: m3_inline_link, M3-INLINE) -->
-    <link name="arm_inline" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.150"/>
-      <origin xyz="-0.055 0.0 0.0" rpy="0.0 1.5708 0.0"/>
-      <material name="Aluminium"/>
-      <mass value="0.341"/>
-      <look name="arm_dark"/>
-    </link>
-    <joint name="arm_inline_joint" type="fixed">
-      <parent name="arm_base"/>
-      <child name="arm_inline"/>
-      <origin xyz="0.124 0.004 0.0" rpy="0.0 0.0 0.0"/>
-    </joint>
-
-    <!-- Joint E connector (URDF: m2_1_1_link, M2-1-1) -->
-    <link name="arm_connector" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.040"/>
-      <origin xyz="0.0 0.0 0.020" rpy="0.0 0.0 0.0"/>
-      <material name="Aluminium"/>
-      <mass value="0.194"/>
-      <look name="arm_orange"/>
-    </link>
-    <joint name="axis_e" type="fixed">
-      <parent name="arm_inline"/>
-      <child name="arm_connector"/>
-      <origin xyz="0.0 0.0 0.014" rpy="0.0 0.0 0.0"/>
-    </joint>
-
-    <!-- Main arm segment (URDF: m2_link, M2) — longest link -->
-    <link name="arm_upper" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.145"/>
-      <origin xyz="-0.02 0.0 -0.0725" rpy="0.0 0.0 0.0"/>
-      <material name="Aluminium"/>
-      <mass value="0.429"/>
-      <look name="arm_orange"/>
-    </link>
-    <joint name="axis_d" type="fixed">
-      <parent name="arm_connector"/>
-      <child name="arm_upper"/>
-      <origin xyz="-0.02 0.0 0.033" rpy="0.0 0.0 0.0"/>
-    </joint>
-
-    <!-- Elbow connector (URDF: m2_1_3_link, M2-1-3) -->
-    <link name="arm_elbow" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.040"/>
-      <origin xyz="0.02 0.0 0.020" rpy="0.0 0.0 0.0"/>
-      <material name="Aluminium"/>
-      <mass value="0.115"/>
-      <look name="arm_orange"/>
-    </link>
-    <joint name="axis_c" type="fixed">
-      <parent name="arm_upper"/>
-      <child name="arm_elbow"/>
-      <origin xyz="-0.04 0.0 -0.1453" rpy="0.0 0.0 3.14159"/>
-    </joint>
-
-    <!-- Wrist (URDF: m1_link, M1) -->
-    <link name="arm_wrist" type="cylinder" physics="submerged" buoyant="true">
-      <dimensions radius="0.035" height="0.100"/>
-      <origin xyz="0.0 0.0 0.05" rpy="0.0 0.0 0.0"/>
-      <material name="Aluminium"/>
-      <mass value="0.200"/>
-      <look name="arm_dark"/>
-    </link>
-    <joint name="axis_b" type="fixed">
-      <parent name="arm_elbow"/>
-      <child name="arm_wrist"/>
-      <origin xyz="0.02 0.0 0.033" rpy="0.0 0.0 2.09439"/>
-    </joint>
-
-    <!-- Magnetic gripper tip -->
-    <link name="gripper_tip" type="sphere" physics="submerged" buoyant="true">
-      <dimensions radius="0.035"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-      <material name="PermanentMagnet"/>
-      <mass value="0.15"/>
-      <look name="red"/>
-    </link>
-    <joint name="gripper_joint" type="fixed">
-      <parent name="arm_wrist"/>
-      <child name="gripper_tip"/>
-      <origin xyz="0.0 0.0 0.14" rpy="0.0 0.0 0.0"/>
-    </joint>
-
-    <!-- End-effector control frame -->
-    <link name="ee_frame" type="sphere" physics="surface" buoyant="false">
-      <dimensions radius="0.005"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-      <material name="Neutral"/>
-      <mass value="0.001"/>
-      <look name="red"/>
-    </link>
-    <joint name="ee_frame_joint" type="fixed">
-      <parent name="gripper_tip"/>
-      <child name="ee_frame"/>
-      <origin xyz="0.0 0.0 0.025" rpy="0.0 0.0 0.0"/>
-    </joint>
 
     <!-- ============================================================== -->
     <!-- THRUSTERS: BlueROV2 Heavy vectored 6-DOF (8 thrusters)         -->
@@ -440,10 +307,8 @@
       </thrust_model>
     </actuator>
 
-    <!-- ARM JOINTS: all fixed (no servo actuators needed) -->
 
-
-    <!-- ============================================================== -->
+<!-- ============================================================== -->
     <!-- SENSORS                                                        -->
     <!-- ============================================================== -->
 
@@ -493,13 +358,6 @@
       <ros_publisher topic="/chatboat/camera_front"/>
     </sensor>
 
-    <!-- End-effector camera -->
-    <sensor name="ee_camera" type="camera" rate="15.0">
-      <link name="gripper_tip"/>
-      <origin xyz="0.0 0.0 -0.02" rpy="0.0 1.5708 0.0"/>
-      <specs resolution_x="640" resolution_y="480" horizontal_fov="70.0"/>
-      <ros_publisher topic="/chatboat/ee_camera"/>
-    </sensor>
 
     <!-- ============================================================== -->
     <!-- ROS2 TOPIC WIRING                                              -->
