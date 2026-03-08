@@ -131,7 +131,9 @@ def main():
 
             if use_ros:
                 ros.spin_once()  # process callbacks that arrived during solve
-                state = ros.get_vehicle_state() or state
+                fresh = ros.get_vehicle_state()
+                if fresh is not None:
+                    state = fresh
                 # Convert world-frame acceleration to body-frame thrust
                 surge, sway = world_to_body(u[0], u[1], state[3])
                 heave = float(u[2])
