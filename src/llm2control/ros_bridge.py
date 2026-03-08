@@ -14,6 +14,17 @@ try:
     _HAS_ROS = True
 except ImportError:
     _HAS_ROS = False
+    print("\n" + "=" * 60)
+    print("WARNING: rclpy not found!")
+    print("The pipeline will run in OFFLINE/MOCK mode.")
+    print("No thruster commands will be published.")
+    print("")
+    print("To run with ROS2, use the system Python (not Poetry venv):")
+    print("  source /opt/ros/humble/setup.bash")
+    print("  source install/setup.bash")
+    print("  pip install openai numpy casadi")
+    print("  cd src && python -m llm2control.main")
+    print("=" * 60 + "\n")
 
 
 def _quaternion_to_yaw(q) -> float:

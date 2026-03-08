@@ -50,18 +50,25 @@ def main():
 
     # Wait for first odometry (give simulator time to start)
     print("Waiting for odometry...")
-    for _ in range(50):  # 5 seconds
+    for i in range(150):  # 15 seconds
         ros.spin_once(timeout_sec=0.1)
         if ros.get_vehicle_state() is not None:
+            print(f"Odometry received after {(i + 1) * 0.1:.1f}s")
             break
     else:
-        print("No odometry received — running in offline (mock) mode")
+        print("\n" + "!" * 60)
+        print("No odometry received after 15s — running in MOCK mode.")
+        print("Thruster commands will NOT be published!")
+        print("Check: is the simulator running? Is /chatboat/odometry being published?")
+        print("!" * 60 + "\n")
 
     use_ros = ros.get_vehicle_state() is not None
     mock_state = np.zeros(8)
     mock_state[:3] = ROBOT_START
     if not use_ros:
         print(f"Mock start state: {mock_state[:4]}")
+    else:
+        print(f"ROS mode active — publishing to {THRUSTER_TOPIC}")
 
     # ── User input ───────────────────────────────────────────────────────
     print("\n" + "=" * 60)
