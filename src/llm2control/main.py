@@ -15,7 +15,7 @@ import numpy as np
 
 from llm2control.agent import LaMPCAgent
 from llm2control.config import ROBOT_START, KNOWN_OBJECTS, MPC_DT
-from llm2control.dynamics import world_to_body, vehicle_dynamics_matrices
+from llm2control.dynamics import world_to_body, vehicle_dynamics_matrices, thruster_mixing
 from llm2control.mpc import VehicleMPCSolver
 from llm2control.ros_bridge import ROSBridge
 
@@ -121,10 +121,21 @@ def main():
             # Check completion
             pos_error = np.linalg.norm(state[:3] - config.target[:3])
             if step % 10 == 0:
-                print(f"  t={time.time() - t0:.1f}s | "
-                      f"pos=({state[0]:.2f}, {state[1]:.2f}, {state[2]:.2f}) | "
-                      f"err={pos_error:.3f}m | "
-                      f"u=[{u[0]:.3f}, {u[1]:.3f}, {u[2]:.3f}, {u[3]:.3f}]")
+                if use_ros:
+                    surge, sway = world_to_body(u[0], u[1], state[3])
+                    heave_dbg = float(u[2])
+                    thrust_vals = thruster_mixing(surge, sway, heave_dbg, float(u[3]))
+                    print(f"  t={time.time() - t0:.1f}s | "
+                          f"pos=({state[0]:.2f}, {state[1]:.2f}, {state[2]:.2f}) | "
+                          f"err={pos_error:.3f}m | "
+                          f"u_world=[{u[0]:.3f}, {u[1]:.3f}, {u[2]:.3f}, {u[3]:.3f}] | "
+                          f"body=[surge={surge:.3f}, sway={sway:.3f}, heave={heave_dbg:.3f}] | "
+                          f"thrusters={[f'{t:.2f}' for t in thrust_vals]}")
+                else:
+                    print(f"  t={time.time() - t0:.1f}s | "
+                          f"pos=({state[0]:.2f}, {state[1]:.2f}, {state[2]:.2f}) | "
+                          f"err={pos_error:.3f}m | "
+                          f"u=[{u[0]:.3f}, {u[1]:.3f}, {u[2]:.3f}, {u[3]:.3f}]")
 
             if pos_error < config.completion_threshold:
                 print(f"  Subtask {subtask.id} COMPLETE (error={pos_error:.3f}m)")
