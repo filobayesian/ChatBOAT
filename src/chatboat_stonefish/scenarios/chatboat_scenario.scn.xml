@@ -131,7 +131,7 @@
         <material name="Neutral"/>
         <look name="None"/>
         <mass value="0.025"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.1 -0.1 -0.04"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.1 -0.1 -0.06"/>
       </internal_part>
       <internal_part name="BackRight" type="box" physics="submerged" buoyant="true">
         <dimensions xyz="0.2 0.15 0.091"/>
@@ -139,7 +139,7 @@
         <material name="Neutral"/>
         <look name="None"/>
         <mass value="0.025"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.1 0.1 -0.04"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.1 0.1 -0.06"/>
       </internal_part>
       <internal_part name="FrontLeft" type="box" physics="submerged" buoyant="true">
         <dimensions xyz="0.2 0.15 0.091"/>
@@ -147,7 +147,7 @@
         <material name="Neutral"/>
         <look name="None"/>
         <mass value="0.025"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 -0.1 -0.04"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 -0.1 -0.06"/>
       </internal_part>
       <internal_part name="FrontRight" type="box" physics="submerged" buoyant="true">
         <dimensions xyz="0.2 0.15 0.091"/>
@@ -155,7 +155,7 @@
         <material name="Neutral"/>
         <look name="None"/>
         <mass value="0.025"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 0.1 -0.04"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 0.1 -0.06"/>
       </internal_part>
 
       <!-- Ballast weights (tuned for near-neutral buoyancy) -->
@@ -166,24 +166,24 @@
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="0.2"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.05 0.0 0.18"/>
+        <mass value="0.3"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.05 0.0 0.22"/>
       </internal_part>
       <internal_part name="WeightLeft" type="sphere" physics="submerged" buoyant="false">
         <dimensions radius="0.01"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="0.1"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 -0.075 0.18"/>
+        <mass value="0.15"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 -0.075 0.22"/>
       </internal_part>
       <internal_part name="WeightRight" type="sphere" physics="submerged" buoyant="false">
         <dimensions radius="0.01"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="0.1"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.075 0.18"/>
+        <mass value="0.15"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.075 0.22"/>
       </internal_part>
     </base_link>
 
