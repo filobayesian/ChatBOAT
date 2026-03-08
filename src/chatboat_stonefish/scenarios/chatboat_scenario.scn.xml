@@ -62,6 +62,25 @@
     <world_transform xyz="0.0 0.0 5.5" rpy="0.0 0.0 0.0"/>
   </static>
 
+  <!-- Manipulation targets -->
+  <dynamic name="cube_a" type="box">
+    <dimensions xyz="0.1 0.1 0.1"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <material name="Ferromagnetic"/>
+    <mass value="2.0"/>
+    <look name="red"/>
+    <world_transform xyz="-1.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
+  </dynamic>
+
+  <dynamic name="cube_b" type="box">
+    <dimensions xyz="0.1 0.1 0.1"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <material name="Ferromagnetic"/>
+    <mass value="2.0"/>
+    <look name="green"/>
+    <world_transform xyz="4.0 0.0 4.95" rpy="0.0 0.0 0.0"/>
+  </dynamic>
+
   <!-- ================================================================== -->
   <!-- ROBOT: BlueROV2 Heavy (no arm)                                    -->
   <!-- ================================================================== -->
