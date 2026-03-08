@@ -228,12 +228,10 @@
       <mass value="0.194"/>
       <look name="arm_orange"/>
     </link>
-    <joint name="axis_e" type="revolute">
+    <joint name="axis_e" type="fixed">
       <parent name="arm_inline"/>
       <child name="arm_connector"/>
       <origin xyz="0.0 0.0 0.014" rpy="0.0 0.0 0.0"/>
-      <axis xyz="0.0 0.0 1.0"/>
-      <limits min="0.0" max="6.10"/>
     </joint>
 
     <!-- Main arm segment (URDF: m2_link, M2) — longest link -->
@@ -244,12 +242,10 @@
       <mass value="0.429"/>
       <look name="arm_orange"/>
     </link>
-    <joint name="axis_d" type="revolute">
+    <joint name="axis_d" type="fixed">
       <parent name="arm_connector"/>
       <child name="arm_upper"/>
       <origin xyz="-0.02 0.0 0.033" rpy="0.0 0.0 0.0"/>
-      <axis xyz="0.0 1.0 0.0"/>
-      <limits min="-3.49" max="3.49"/>
     </joint>
 
     <!-- Elbow connector (URDF: m2_1_3_link, M2-1-3) -->
@@ -260,12 +256,10 @@
       <mass value="0.115"/>
       <look name="arm_orange"/>
     </link>
-    <joint name="axis_c" type="revolute">
+    <joint name="axis_c" type="fixed">
       <parent name="arm_upper"/>
       <child name="arm_elbow"/>
       <origin xyz="-0.04 0.0 -0.1453" rpy="0.0 0.0 3.14159"/>
-      <axis xyz="0.0 1.0 0.0"/>
-      <limits min="0.0" max="3.22"/>
     </joint>
 
     <!-- Wrist (URDF: m1_link, M1) -->
@@ -276,12 +270,10 @@
       <mass value="0.200"/>
       <look name="arm_dark"/>
     </link>
-    <joint name="axis_b" type="revolute">
+    <joint name="axis_b" type="fixed">
       <parent name="arm_elbow"/>
       <child name="arm_wrist"/>
       <origin xyz="0.02 0.0 0.033" rpy="0.0 0.0 2.09439"/>
-      <axis xyz="0.0 0.0 -1.0"/>
-      <limits min="0.0" max="3.22"/>
     </joint>
 
     <!-- Magnetic gripper tip -->
@@ -448,29 +440,7 @@
       </thrust_model>
     </actuator>
 
-    <!-- ============================================================== -->
-    <!-- ARM SERVO ACTUATORS                                            -->
-    <!-- ============================================================== -->
-    <actuator name="servo_e" type="servo">
-      <joint name="axis_e"/>
-      <controller position_gain="2.0" velocity_gain="3.0" max_torque="3.0"/>
-      <initial position="2.64"/>
-    </actuator>
-    <actuator name="servo_d" type="servo">
-      <joint name="axis_d"/>
-      <controller position_gain="2.0" velocity_gain="3.0" max_torque="3.0"/>
-      <initial position="2.22"/>
-    </actuator>
-    <actuator name="servo_c" type="servo">
-      <joint name="axis_c"/>
-      <controller position_gain="2.0" velocity_gain="3.0" max_torque="3.0"/>
-      <initial position="2.64"/>
-    </actuator>
-    <actuator name="servo_b" type="servo">
-      <joint name="axis_b"/>
-      <controller position_gain="2.0" velocity_gain="3.0" max_torque="3.0"/>
-      <initial position="0.04"/>
-    </actuator>
+    <!-- ARM JOINTS: all fixed (no servo actuators needed) -->
 
 
     <!-- ============================================================== -->
@@ -523,14 +493,7 @@
       <ros_publisher topic="/chatboat/camera_front"/>
     </sensor>
 
-    <!-- Arm sensors -->
-    <sensor name="ft_wrist" type="forcetorque" rate="100.0">
-      <joint name="axis_b"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-      <noise force="0.1" torque="0.01"/>
-      <ros_publisher topic="/chatboat/ft_wrist"/>
-    </sensor>
-
+    <!-- End-effector camera -->
     <sensor name="ee_camera" type="camera" rate="15.0">
       <link name="gripper_tip"/>
       <origin xyz="0.0 0.0 -0.02" rpy="0.0 1.5708 0.0"/>
@@ -538,28 +501,10 @@
       <ros_publisher topic="/chatboat/ee_camera"/>
     </sensor>
 
-    <!-- Joint encoders -->
-    <sensor name="encoder_e" type="encoder" rate="100.0">
-      <joint name="axis_e"/>
-      <ros_publisher topic="/chatboat/joint_states"/>
-    </sensor>
-    <sensor name="encoder_d" type="encoder" rate="100.0">
-      <joint name="axis_d"/>
-      <ros_publisher topic="/chatboat/joint_states"/>
-    </sensor>
-    <sensor name="encoder_c" type="encoder" rate="100.0">
-      <joint name="axis_c"/>
-      <ros_publisher topic="/chatboat/joint_states"/>
-    </sensor>
-    <sensor name="encoder_b" type="encoder" rate="100.0">
-      <joint name="axis_b"/>
-      <ros_publisher topic="/chatboat/joint_states"/>
-    </sensor>
-
     <!-- ============================================================== -->
     <!-- ROS2 TOPIC WIRING                                              -->
     <!-- ============================================================== -->
-    <ros_subscriber thrusters="/chatboat/thruster_commands" servos="/chatboat/joint_commands"/>
+    <ros_subscriber thrusters="/chatboat/thruster_commands"/>
 
     <!-- Initial position: 2m depth, centered -->
     <world_transform xyz="0.0 0.0 2.0" rpy="0.0 0.0 0.0"/>
