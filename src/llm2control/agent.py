@@ -58,6 +58,7 @@ class LaMPCAgent:
             base_url="https://openrouter.ai/api/v1",
         )
         self.model = model
+        self.last_usage = {}
 
     # ── Task Planner ─────────────────────────────────────────────────────────
 
@@ -96,6 +97,11 @@ class LaMPCAgent:
             tool_choice={"type": "function", "function": {"name": "plan_subtasks"}},
             messages=messages,
         )
+
+        self.last_usage = {
+            "prompt_tokens": getattr(response.usage, "prompt_tokens", None),
+            "completion_tokens": getattr(response.usage, "completion_tokens", None),
+        }
 
         raw_args = response.choices[0].message.tool_calls[0].function.arguments
         raw = json.loads(raw_args)
@@ -160,6 +166,11 @@ class LaMPCAgent:
             tool_choice={"type": "function", "function": {"name": "configure_mpc"}},
             messages=messages,
         )
+
+        self.last_usage = {
+            "prompt_tokens": getattr(response.usage, "prompt_tokens", None),
+            "completion_tokens": getattr(response.usage, "completion_tokens", None),
+        }
 
         raw_args = response.choices[0].message.tool_calls[0].function.arguments
         raw = json.loads(raw_args)

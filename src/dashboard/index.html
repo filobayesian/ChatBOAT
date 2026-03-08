@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClawdBoat: LLM → MPC Control Dashboard</title>
+  <style>
+    /* ========== CUSTOM PROPERTIES ========== */
+    :root {
+      --cream: #F5F0EB;
+      --cream-dark: #EDE6DE;
+      --card: #FDFAF8;
+      --card-hover: #FFF8F5;
+      --coral: #E8415C;
+      --coral-light: #FF6B6B;
+      --coral-mid: #F25D70;
+      --coral-pale: #FFD4CC;
+      --coral-ghost: rgba(232, 65, 92, 0.07);
+      --coral-glow: rgba(232, 65, 92, 0.15);
+      --black: #0A0A0A;
+      --dark: #1A1A1A;
+      --body: #3D3835;
+      --muted: #8A8580;
+      --muted-light: #B5AFA8;
+      --border: #DDD5CC;
+      --border-light: #EBE5DD;
+      --blue-gray: #7B8FA0;
+      --blue-dark: #5A7088;
+      --success: #2D9F6F;
+      --success-pale: #E8F5EE;
+
+      --font-display: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-body: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif;
+      --font-mono: "SF Mono", "Menlo", "Cascadia Code", "Consolas", monospace;
+
+      --radius: 6px;
+      --radius-lg: 10px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+      --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+      --transition: 0.2s ease;
+    }
+
+    /* ========== RESET & BASE ========== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--body);
+      background: radial-gradient(ellipse at 50% 20%, #F8F3EE, #F0E8E0 70%, #EAE2D8);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* ========== GRAIN OVERLAY ========== */
+    #grain {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      background-repeat: repeat;
+      opacity: 0.45;
+      mix-blend-mode: multiply;
+    }
+
+    /* ========== HEADER ========== */
+    .header {
+      position: relative;
+      padding: 48px 48px 32px;
+      overflow: hidden;
+    }
+
+    .header-glow {
+      position: absolute;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      height: 500px;
+      background: radial-gradient(ellipse at 50% 65%,
+        rgba(232, 65, 92, 0.28),
+        rgba(255, 107, 107, 0.12) 45%,
+        rgba(255, 180, 162, 0.05) 65%,
+        transparent 80%
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .header h1 {
+      font-family: var(--font-display);
+      font-size: 72px;
+      font-weight: 900;
+      color: var(--black);
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    .header-sub {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      margin-top: 12px;
+      font-size: 13px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+    }
+
+    .header-date {
+      font-weight: 600;
+      color: var(--body);
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 11px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted-light);
+      transition: background 0.4s;
+    }
+
+    .status-dot.live {
+      background: var(--coral);
+      box-shadow: 0 0 8px rgba(232, 65, 92, 0.5);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    .status-dot.complete {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(45, 159, 111, 0.4);
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ========== ZIGZAG DIVIDER ========== */
+    .zigzag-wrap {
+      padding: 0 48px;
+      margin: 4px 0 24px;
+    }
+
+    .zigzag {
+      width: 100%;
+      height: 6px;
+      display: block;
+    }
+
+    /* ========== COMMAND SECTION ========== */
+    .command-section {
+      padding: 0 48px 20px;
+    }
+
+    .command-bar {
+      display: flex;
+      gap: 10px;
+      max-width: 800px;
+    }
+
+    .command-bar input {
+      flex: 1;
+      padding: 12px 18px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--dark);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .command-bar input:focus {
+      border-color: var(--coral-pale);
+      box-shadow: 0 0 0 3px rgba(232, 65, 92, 0.08);
+    }
+
+    .command-bar input::placeholder {
+      color: var(--muted-light);
+    }
+
+    .send-btn {
+      padding: 12px 28px;
+      background: var(--coral);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background var(--transition), transform 0.1s;
+      letter-spacing: 0.3px;
+    }
+
+    .send-btn:hover { background: var(--coral-mid); }
+    .send-btn:active { transform: scale(0.97); }
+    .send-btn:disabled {
+      background: var(--muted-light);
+      cursor: not-allowed;
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--card);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+
+    .chip:hover {
+      border-color: var(--coral-pale);
+      color: var(--coral);
+      background: var(--coral-ghost);
+    }
+
+    /* ========== TASK PLANNER (full width) ========== */
+    .planner-section {
+      padding: 0 48px 12px;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .section-label .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--coral);
+      flex-shrink: 0;
+    }
+
+    .section-label h2 {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--dark);
+    }
+
+    .section-label .step-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+
+    .subtask-flow {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+      min-height: 82px;
+    }
+
+    .subtask-card {
+      flex: 1;
+      max-width: 380px;
+      padding: 14px 18px;
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius);
+      background: var(--card);
+      position: relative;
+      transition: all 0.4s ease;
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    .subtask-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .subtask-card.active {
+      border-color: var(--coral-pale);
+      background: var(--coral-ghost);
+      box-shadow: 0 0 0 3px rgba(232, 65, 92, 0.06);
+    }
+
+    .subtask-card.completed {
+      border-color: var(--success);
+      background: var(--success-pale);
+    }
+
+    .subtask-card .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .subtask-id {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .subtask-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .subtask-badge.navigate {
+      background: rgba(232, 65, 92, 0.1);
+      color: var(--coral);
+    }
+
+    .subtask-badge.return_home {
+      background: rgba(74, 144, 217, 0.1);
+      color: var(--blue-dark);
+    }
+
+    .subtask-badge.hold_position {
+      background: rgba(45, 159, 111, 0.1);
+      color: var(--success);
+    }
+
+    .subtask-instruction {
+      font-size: 12.5px;
+      color: var(--dark);
+      line-height: 1.45;
+    }
+
+    .subtask-check {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 16px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .subtask-card.completed .subtask-check {
+      opacity: 1;
+    }
+
+    .subtask-arrow {
+      display: flex;
+      align-items: center;
+      color: var(--muted-light);
+      font-size: 18px;
+      flex-shrink: 0;
+      padding-top: 12px;
+    }
+
+    .subtask-arrow.completed {
+      color: var(--coral);
+    }
+
+    .planner-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 82px;
+      color: var(--muted-light);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      border: 1.5px dashed var(--border-light);
+      border-radius: var(--radius);
+    }
+
+    .planner-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--muted);
+    }
+
+    /* ========== TIMELINE ========== */
+    .timeline-section {
+      padding: 8px 48px 16px;
+    }
+
+    .timeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      position: relative;
+      height: 48px;
+    }
+
+    .tl-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      min-width: 70px;
+    }
+
+    .tl-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--cream);
+      transition: all 0.4s ease;
+    }
+
+    .tl-dot.active {
+      border-color: var(--coral);
+      background: var(--coral);
+      box-shadow: 0 0 10px rgba(232, 65, 92, 0.35);
+    }
+
+    .tl-dot.done {
+      border-color: var(--success);
+      background: var(--success);
+    }
+
+    .tl-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 6px;
+      white-space: nowrap;
+      transition: color 0.3s;
+    }
+
+    .tl-label.active {
+      color: var(--coral);
+      font-weight: 700;
+    }
+
+    .tl-label.done {
+      color: var(--success);
+    }
+
+    .tl-edge {
+      flex: 1;
+      height: 2px;
+      background: var(--border-light);
+      transition: background 0.4s;
+      margin-top: -18px;
+    }
+
+    .tl-edge.done {
+      background: var(--success);
+    }
+
+    .tl-edge.active {
+      background: linear-gradient(90deg, var(--success), var(--coral));
+    }
+
+    /* ========== THINKING BAR ========== */
+    .thinking-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .thinking-bar.active {
+      opacity: 1;
+    }
+
+    .thinking-bar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--coral);
+      animation: think-sweep 1.4s ease-in-out infinite;
+    }
+
+    @keyframes think-sweep {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+
+    /* ========== MAIN GRID ========== */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr 260px;
+      gap: 16px;
+      padding: 0 48px 48px;
+      align-items: start;
+    }
+
+    /* ========== PANEL ========== */
+    .panel {
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      background: var(--card);
+      padding: 18px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.1px;
+      color: var(--dark);
+      margin-bottom: 14px;
+    }
+
+    .panel-title .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--coral);
+      flex-shrink: 0;
+    }
+
+    .panel-subtitle {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: -10px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state {
+      color: var(--muted-light);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    /* ========== OPTIMIZER PANEL ========== */
+    .opt-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .opt-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      min-width: 90px;
+    }
+
+    .opt-value {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    .opt-target {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .opt-target-item {
+      text-align: center;
+      padding: 6px 4px;
+      background: var(--coral-ghost);
+      border-radius: 4px;
+    }
+
+    .opt-target-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--muted);
+      display: block;
+    }
+
+    .opt-target-val {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--coral);
+    }
+
+    .weight-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+
+    .weight-bar-label {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--muted);
+      width: 52px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .weight-bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--cream-dark);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .weight-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--coral);
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .weight-bar-fill.r-weight {
+      background: var(--blue-gray);
+    }
+
+    .weight-bar-val {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--dark);
+      width: 36px;
+      text-align: right;
+    }
+
+    .opt-divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 12px 0;
+    }
+
+    .opt-params {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .opt-param {
+      padding: 6px 8px;
+      background: var(--cream);
+      border-radius: 4px;
+    }
+
+    .opt-param-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--muted);
+      display: block;
+    }
+
+    .opt-param-val {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    .obstacle-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      background: rgba(232, 65, 92, 0.04);
+      border: 1px solid rgba(232, 65, 92, 0.1);
+      border-radius: 4px;
+      margin-top: 6px;
+    }
+
+    .obstacle-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--coral);
+      flex-shrink: 0;
+    }
+
+    .obstacle-info {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--body);
+    }
+
+    .obstacle-name {
+      font-weight: 700;
+    }
+
+    /* ========== TRAJECTORY SVG ========== */
+    .trajectory-views {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .traj-view {
+      position: relative;
+    }
+
+    .traj-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 4px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .traj-svg {
+      width: 100%;
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      background: var(--cream);
+    }
+
+    .traj-grid-line { stroke: var(--border-light); stroke-width: 0.5; }
+    .traj-axis-label { font-family: var(--font-mono); font-size: 9px; fill: var(--muted-light); }
+    .traj-workspace { fill: none; stroke: var(--border); stroke-width: 1; stroke-dasharray: 4 3; }
+
+    .traj-obstacle {
+      fill: rgba(232, 65, 92, 0.08);
+      stroke: var(--coral);
+      stroke-width: 1;
+      stroke-dasharray: 3 2;
+    }
+
+    .traj-obstacle-safety {
+      fill: none;
+      stroke: var(--coral-pale);
+      stroke-width: 0.8;
+      stroke-dasharray: 2 2;
+    }
+
+    .traj-history {
+      fill: none;
+      stroke: var(--coral);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .traj-predicted {
+      fill: none;
+      stroke: var(--coral-pale);
+      stroke-width: 1.2;
+      stroke-dasharray: 4 3;
+      stroke-linecap: round;
+    }
+
+    .traj-target {
+      stroke: var(--coral);
+      stroke-width: 1.5;
+    }
+
+    .traj-vehicle {
+      fill: var(--coral);
+    }
+
+    .traj-vehicle-ring {
+      fill: none;
+      stroke: var(--coral);
+      stroke-width: 1;
+      opacity: 0.4;
+    }
+
+    @keyframes sonar-ping {
+      0% { r: 6; opacity: 0.5; }
+      100% { r: 18; opacity: 0; }
+    }
+
+    .traj-ping {
+      fill: none;
+      stroke: var(--coral);
+      stroke-width: 0.8;
+      animation: sonar-ping 2s ease-out infinite;
+    }
+
+    /* ========== VEHICLE STATE ========== */
+    .state-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 12px;
+    }
+
+    .state-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .state-label {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--muted);
+    }
+
+    .state-val {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--dark);
+      transition: color 0.3s;
+    }
+
+    .state-unit {
+      font-size: 9.5px;
+      color: var(--muted-light);
+      margin-left: 2px;
+    }
+
+    .state-divider {
+      grid-column: 1 / -1;
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+
+    .state-highlight {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: var(--coral-ghost);
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+
+    .state-highlight .state-label {
+      color: var(--coral);
+      font-weight: 600;
+    }
+
+    .state-highlight .state-val {
+      color: var(--coral);
+      font-size: 14px;
+    }
+
+    /* ========== THRUSTER BARS ========== */
+    .thruster-group-label {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin: 10px 0 6px;
+    }
+
+    .thruster-group-label:first-child {
+      margin-top: 0;
+    }
+
+    .thruster-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .thruster-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      width: 48px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .thruster-track {
+      flex: 1;
+      height: 10px;
+      background: var(--cream-dark);
+      border-radius: 5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .thruster-center {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .thruster-fill {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      border-radius: 5px;
+      transition: left 0.15s ease, width 0.15s ease, background 0.15s;
+    }
+
+    .thruster-fill.positive {
+      background: var(--coral);
+    }
+
+    .thruster-fill.negative {
+      background: var(--blue-gray);
+    }
+
+    .thruster-val {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--dark);
+      width: 38px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .body-frame-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .body-val {
+      text-align: center;
+    }
+
+    .body-val-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--muted);
+      display: block;
+    }
+
+    .body-val-num {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    /* ========== CONTROL BARS ========== */
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+
+    .ctrl-label {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--muted);
+      width: 36px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .ctrl-track {
+      flex: 1;
+      height: 10px;
+      background: var(--cream-dark);
+      border-radius: 5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ctrl-center {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .ctrl-fill {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      border-radius: 5px;
+      transition: left 0.15s ease, width 0.15s ease;
+    }
+
+    .ctrl-fill.positive { background: var(--coral); }
+    .ctrl-fill.negative { background: var(--blue-gray); }
+
+    .ctrl-val {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--dark);
+      width: 48px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* ========== WS BADGE ========== */
+    .ws-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--cream-dark);
+      color: var(--muted);
+      margin-left: 12px;
+    }
+
+    .ws-badge .ws-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--muted-light);
+    }
+
+    .ws-badge.connected {
+      background: var(--success-pale);
+      color: var(--success);
+    }
+
+    .ws-badge.connected .ws-dot {
+      background: var(--success);
+    }
+
+    /* ========== ANIMATIONS ========== */
+    @keyframes fade-in-up {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-in {
+      animation: fade-in-up 0.5s ease forwards;
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 1200px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .dashboard-grid .col-left {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      .dashboard-grid .col-left {
+        grid-template-columns: 1fr;
+      }
+      .header h1 { font-size: 48px; }
+      .header, .command-section, .planner-section,
+      .timeline-section, .dashboard-grid, .zigzag-wrap {
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+      .trajectory-views {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Grain overlay -->
+  <div id="grain"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-glow"></div>
+    <div class="header-content">
+      <h1>ClawdBoat:</h1>
+      <div class="header-sub">
+        <span>LLM &rarr; MPC Control Dashboard</span>
+        <span class="header-date">03/2026</span>
+        <div class="status-indicator">
+          <div class="status-dot" id="statusDot"></div>
+          <span id="statusText">IDLE</span>
+        </div>
+        <div class="ws-badge" id="wsBadge">
+          <div class="ws-dot"></div>
+          <span id="wsBadgeText">WS: Offline</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Zigzag divider -->
+  <div class="zigzag-wrap">
+    <svg class="zigzag" viewBox="0 0 1200 6" preserveAspectRatio="none" id="zigzagSvg"></svg>
+  </div>
+
+  <!-- Command Input -->
+  <section class="command-section">
+    <div class="command-bar">
+      <input type="text" id="queryInput" placeholder="Enter a navigation command&hellip;">
+      <button class="send-btn" id="sendBtn">Execute</button>
+    </div>
+    <div class="chips" id="chips">
+      <button class="chip" data-query="Go inspect the red cube then return home">Go inspect the red cube then return home</button>
+      <button class="chip" data-query="Navigate to position (2, 1) at depth 3 meters">Navigate to (2, 1) at depth 3m</button>
+      <button class="chip" data-query="Hold position at current location">Hold position</button>
+    </div>
+  </section>
+
+  <!-- Task Planner -->
+  <section class="planner-section" id="plannerSection">
+    <div class="section-label">
+      <span class="dot"></span>
+      <h2>Task Planner</h2>
+      <span class="step-label">LLM Reasoning &mdash; Step 1</span>
+    </div>
+    <div id="subtaskFlow" class="subtask-flow">
+      <div class="planner-empty" id="plannerEmpty">Awaiting command&hellip;</div>
+    </div>
+    <div class="planner-meta" id="plannerMeta"></div>
+  </section>
+
+  <!-- Timeline -->
+  <section class="timeline-section">
+    <div class="timeline" id="timeline"></div>
+  </section>
+
+  <!-- Main Grid -->
+  <main class="dashboard-grid">
+    <!-- Left Column: Optimizer -->
+    <div class="col-left">
+      <div class="panel" id="optimizerPanel">
+        <div class="panel-title"><span class="dot"></span>Optimization Formulator</div>
+        <div class="panel-subtitle">LLM Reasoning &mdash; Step 2</div>
+        <div id="optimizerContent">
+          <div class="empty-state">Awaiting subtask&hellip;</div>
+        </div>
+        <div class="thinking-bar" id="optThinking"></div>
+      </div>
+    </div>
+
+    <!-- Center Column: Trajectory + Control -->
+    <div class="col-center">
+      <div class="panel">
+        <div class="panel-title"><span class="dot"></span>Trajectory</div>
+        <div class="trajectory-views">
+          <div class="traj-view">
+            <div class="traj-label">Top-Down (XY)</div>
+            <svg class="traj-svg" id="svgXY" viewBox="0 0 400 400"></svg>
+          </div>
+          <div class="traj-view">
+            <div class="traj-label">Side View (XZ &mdash; Depth)</div>
+            <svg class="traj-svg" id="svgXZ" viewBox="0 0 400 300"></svg>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><span class="dot"></span>Control Output <span style="font-weight:400;color:var(--muted);font-size:10px;margin-left:6px">world-frame accelerations</span></div>
+        <div id="controlContent"></div>
+      </div>
+    </div>
+
+    <!-- Right Column: State + Thrusters -->
+    <div class="col-right">
+      <div class="panel">
+        <div class="panel-title"><span class="dot"></span>Vehicle State</div>
+        <div id="stateContent"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><span class="dot"></span>Thrusters <span style="font-weight:400;color:var(--muted);font-size:10px;margin-left:6px">body-frame</span></div>
+        <div id="thrusterContent"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* ============================================================
+       ClawdBoat: LLM → MPC Control Dashboard
+       Demo simulation with mock data
+       ============================================================ */
+
+    // ===== CONSTANTS =====
+    const DT = 0.1;
+    const SIM_INTERVAL = 80; // ms per simulation step (faster than real-time for demo)
+    const N_PREDICT = 15;
+
+    // SVG coordinate mapping
+    const XY = { xMin: -2.5, xMax: 3.5, yMin: -3, yMax: 3, l: 40, r: 380, t: 40, b: 380 };
+    const XZ = { xMin: -2.5, xMax: 3.5, zMin: -0.5, zMax: 5.5, l: 40, r: 380, t: 25, b: 275 };
+
+    function mapXY(x, y) {
+      return [
+        XY.l + (x - XY.xMin) / (XY.xMax - XY.xMin) * (XY.r - XY.l),
+        XY.b - (y - XY.yMin) / (XY.yMax - XY.yMin) * (XY.b - XY.t)
+      ];
+    }
+    function mapXZ(x, z) {
+      return [
+        XZ.l + (x - XZ.xMin) / (XZ.xMax - XZ.xMin) * (XZ.r - XZ.l),
+        XZ.t + (z - XZ.zMin) / (XZ.zMax - XZ.zMin) * (XZ.b - XZ.t)
+      ];
+    }
+
+    // ===== MOCK DATA =====
+    const MOCK_SUBTASKS = [
+      { id: 1, instruction: "Navigate to position (1.0, 0.0) at depth 4.5 m, above the red cube", type: "navigate" },
+      { id: 2, instruction: "Return to start position (0.0, 0.0) at depth 2.0 m", type: "return_home" }
+    ];
+
+    const MOCK_CONFIGS = [
+      {
+        target: [1.0, 0.0, 4.5, 0.0],
+        weights: { Q_pos: 5.0, Q_roll: 6.0, Q_yaw: 0.3, Q_vel: 0.001, R_lin: 1.0, R_rot: 0.1 },
+        gamma: 0.065,
+        obstacles: [{ name: "red_cube", position: [1.0, 0.0, 4.95], radius: 0.32 }],
+        velocity_limit: 0.4,
+        completion_threshold: 0.15,
+        timeout: 30.0
+      },
+      {
+        target: [0.0, 0.0, 2.0, 0.0],
+        weights: { Q_pos: 4.0, Q_roll: 5.0, Q_yaw: 0.2, Q_vel: 0.001, R_lin: 1.2, R_rot: 0.1 },
+        gamma: 0.065,
+        obstacles: [{ name: "red_cube", position: [1.0, 0.0, 4.95], radius: 0.32 }],
+        velocity_limit: 0.5,
+        completion_threshold: 0.15,
+        timeout: 30.0
+      }
+    ];
+
+    const TOKEN_USAGE = {
+      planner: { prompt: 1847, completion: 312 },
+      optimizer: [
+        { prompt: 2156, completion: 428 },
+        { prompt: 2089, completion: 391 }
+      ]
+    };
+
+    // ===== APPLICATION STATE =====
+    const app = {
+      phase: 'idle',
+      query: '',
+      subtasks: [],
+      activeIdx: -1,
+      config: null,
+      // Vehicle state: [x, y, z, phi, psi, dx, dy, dz, dphi, dpsi]
+      state: new Float64Array([0, 0, 2, 0, 0, 0, 0, 0, 0, 0]),
+      display: new Float64Array([0, 0, 2, 0, 0, 0, 0, 0, 0, 0]),
+      history: [[0, 0, 2]],
+      predicted: [],
+      thrusters: new Float64Array(8),
+      control: new Float64Array(5),
+      elapsed: 0,
+      error: 0,
+      simTimer: null,
+      animFrame: null,
+      running: false
+    };
+
+    // ===== WEBSOCKET STATE =====
+    const WS_PORT = new URLSearchParams(window.location.search).get('port') || 8765;
+    let ws = null, wsMode = false;
+
+    // ===== DOM REFERENCES =====
+    const dom = {
+      grain: document.getElementById('grain'),
+      statusDot: document.getElementById('statusDot'),
+      statusText: document.getElementById('statusText'),
+      queryInput: document.getElementById('queryInput'),
+      sendBtn: document.getElementById('sendBtn'),
+      chips: document.getElementById('chips'),
+      subtaskFlow: document.getElementById('subtaskFlow'),
+      plannerEmpty: document.getElementById('plannerEmpty'),
+      plannerMeta: document.getElementById('plannerMeta'),
+      timeline: document.getElementById('timeline'),
+      optimizerContent: document.getElementById('optimizerContent'),
+      optThinking: document.getElementById('optThinking'),
+      svgXY: document.getElementById('svgXY'),
+      svgXZ: document.getElementById('svgXZ'),
+      controlContent: document.getElementById('controlContent'),
+      stateContent: document.getElementById('stateContent'),
+      thrusterContent: document.getElementById('thrusterContent'),
+      zigzag: document.getElementById('zigzagSvg'),
+      wsBadge: document.getElementById('wsBadge'),
+      wsBadgeText: document.getElementById('wsBadgeText')
+    };
+
+    // ===== INITIALIZATION =====
+    function init() {
+      generateGrain();
+      drawZigzag();
+      initSVGs();
+      renderVehicleState();
+      renderThrusters();
+      renderControl();
+      buildTimeline();
+
+      // Event listeners
+      dom.sendBtn.addEventListener('click', () => handleSend());
+      dom.queryInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleSend();
+      });
+      dom.chips.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          dom.queryInput.value = chip.dataset.query;
+          handleSend();
+        });
+      });
+
+      // Start render loop
+      requestAnimationFrame(renderLoop);
+
+      // Attempt WebSocket connection (non-blocking — falls back to demo if no server)
+      connectWebSocket();
+    }
+
+    // ===== GRAIN TEXTURE =====
+    function generateGrain() {
+      const c = document.createElement('canvas');
+      const size = 150;
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      const d = ctx.createImageData(size, size);
+      for (let i = 0; i < d.data.length; i += 4) {
+        const v = Math.floor(Math.random() * 255);
+        d.data[i] = v; d.data[i+1] = v; d.data[i+2] = v;
+        d.data[i+3] = 28;
+      }
+      ctx.putImageData(d, 0, 0);
+      dom.grain.style.backgroundImage = `url(${c.toDataURL()})`;
+    }
+
+    // ===== ZIGZAG =====
+    function drawZigzag() {
+      let d = 'M0,3';
+      const step = 8;
+      for (let x = 0; x <= 1200; x += step) {
+        const y = ((x / step) % 2 === 0) ? 1 : 5;
+        d += ` L${x},${y}`;
+      }
+      dom.zigzag.innerHTML = `<path d="${d}" fill="none" stroke="#E8415C" stroke-width="1" opacity="0.5"/>`;
+    }
+
+    // ===== SVG INITIALIZATION =====
+    function initSVGs() {
+      // XY View
+      let xyHTML = '';
+      // Grid lines
+      for (let x = -2; x <= 3; x++) {
+        const [sx] = mapXY(x, 0);
+        xyHTML += `<line x1="${sx}" y1="${XY.t}" x2="${sx}" y2="${XY.b}" class="traj-grid-line"/>`;
+        xyHTML += `<text x="${sx}" y="${XY.b + 14}" class="traj-axis-label" text-anchor="middle">${x}</text>`;
+      }
+      for (let y = -2; y <= 2; y++) {
+        const [, sy] = mapXY(0, y);
+        xyHTML += `<line x1="${XY.l}" y1="${sy}" x2="${XY.r}" y2="${sy}" class="traj-grid-line"/>`;
+        xyHTML += `<text x="${XY.l - 6}" y="${sy + 3}" class="traj-axis-label" text-anchor="end">${y}</text>`;
+      }
+      // Axis labels
+      xyHTML += `<text x="${(XY.l + XY.r) / 2}" y="${XY.b + 28}" class="traj-axis-label" text-anchor="middle" font-weight="600">X (m)</text>`;
+      xyHTML += `<text x="${XY.l - 24}" y="${(XY.t + XY.b) / 2}" class="traj-axis-label" text-anchor="middle" font-weight="600" transform="rotate(-90, ${XY.l - 24}, ${(XY.t + XY.b) / 2})">Y (m)</text>`;
+      // Dynamic elements (will be updated)
+      xyHTML += '<g id="xyDynamic"></g>';
+      dom.svgXY.innerHTML = xyHTML;
+
+      // XZ View
+      let xzHTML = '';
+      for (let x = -2; x <= 3; x++) {
+        const [sx] = mapXZ(x, 0);
+        xzHTML += `<line x1="${sx}" y1="${XZ.t}" x2="${sx}" y2="${XZ.b}" class="traj-grid-line"/>`;
+        xzHTML += `<text x="${sx}" y="${XZ.b + 14}" class="traj-axis-label" text-anchor="middle">${x}</text>`;
+      }
+      for (let z = 0; z <= 5; z++) {
+        const [, sz] = mapXZ(0, z);
+        xzHTML += `<line x1="${XZ.l}" y1="${sz}" x2="${XZ.r}" y2="${sz}" class="traj-grid-line"/>`;
+        xzHTML += `<text x="${XZ.l - 6}" y="${sz + 3}" class="traj-axis-label" text-anchor="end">${z}</text>`;
+      }
+      xzHTML += `<text x="${(XZ.l + XZ.r) / 2}" y="${XZ.b + 28}" class="traj-axis-label" text-anchor="middle" font-weight="600">X (m)</text>`;
+      xzHTML += `<text x="${XZ.l - 24}" y="${(XZ.t + XZ.b) / 2}" class="traj-axis-label" text-anchor="middle" font-weight="600" transform="rotate(-90, ${XZ.l - 24}, ${(XZ.t + XZ.b) / 2})">Z depth (m)</text>`;
+      // Surface line
+      const [, surfZ] = mapXZ(0, 0);
+      xzHTML += `<line x1="${XZ.l}" y1="${surfZ}" x2="${XZ.r}" y2="${surfZ}" stroke="#4A90D9" stroke-width="1.5" opacity="0.3" stroke-dasharray="6 3"/>`;
+      xzHTML += `<text x="${XZ.r + 4}" y="${surfZ + 3}" class="traj-axis-label" fill="#4A90D9" font-weight="600">surface</text>`;
+      xzHTML += '<g id="xzDynamic"></g>';
+      dom.svgXZ.innerHTML = xzHTML;
+    }
+
+    // ===== TIMELINE =====
+    let _timelineIds = ['tl-ready', 'tl-plan', 'tl-sub1', 'tl-sub2', 'tl-done'];
+
+    function buildTimeline(subtaskCount) {
+      const n = subtaskCount != null ? subtaskCount : 2;
+      const phases = [
+        { id: 'tl-ready', label: 'Ready' },
+        { id: 'tl-plan', label: 'Planning' },
+      ];
+      for (let i = 1; i <= n; i++) {
+        phases.push({ id: `tl-sub${i}`, label: `Subtask ${i}` });
+      }
+      phases.push({ id: 'tl-done', label: 'Complete' });
+
+      _timelineIds = phases.map(p => p.id);
+
+      let html = '';
+      phases.forEach((p, i) => {
+        if (i > 0) html += `<div class="tl-edge" id="edge-${i}"></div>`;
+        html += `<div class="tl-node">
+          <div class="tl-dot${i === 0 ? ' active' : ''}" id="${p.id}-dot"></div>
+          <div class="tl-label${i === 0 ? ' active' : ''}" id="${p.id}-label">${p.label}</div>
+        </div>`;
+      });
+      dom.timeline.innerHTML = html;
+    }
+
+    function setTimelinePhase(activeIdx) {
+      _timelineIds.forEach((id, i) => {
+        const dot = document.getElementById(id + '-dot');
+        const label = document.getElementById(id + '-label');
+        if (!dot || !label) return;
+        dot.className = 'tl-dot';
+        label.className = 'tl-label';
+        if (i < activeIdx) {
+          dot.classList.add('done');
+          label.classList.add('done');
+        } else if (i === activeIdx) {
+          dot.classList.add('active');
+          label.classList.add('active');
+        }
+        if (i > 0) {
+          const edge = document.getElementById('edge-' + i);
+          if (!edge) return;
+          edge.className = 'tl-edge';
+          if (i < activeIdx) edge.classList.add('done');
+          else if (i === activeIdx) edge.classList.add('active');
+        }
+      });
+    }
+
+    // ===== STATUS =====
+    function setStatus(status) {
+      dom.statusDot.className = 'status-dot';
+      if (status === 'live') {
+        dom.statusDot.classList.add('live');
+        dom.statusText.textContent = 'EXECUTING';
+      } else if (status === 'planning') {
+        dom.statusDot.classList.add('live');
+        dom.statusText.textContent = 'PLANNING';
+      } else if (status === 'complete') {
+        dom.statusDot.classList.add('complete');
+        dom.statusText.textContent = 'COMPLETE';
+      } else {
+        dom.statusText.textContent = 'IDLE';
+      }
+    }
+
+    // ===== SIMULATION =====
+    function computeControl(state, target) {
+      const kp = 0.3, kd = 0.75;
+      const u = new Float64Array(5);
+      // Position control (world frame)
+      for (let i = 0; i < 3; i++) {
+        const err = target[i] - state[i];
+        u[i] = kp * err - kd * state[i + 5];
+        u[i] = Math.max(-0.3, Math.min(0.3, u[i]));
+      }
+      // Roll stabilization (phi → 0)
+      u[3] = -2.0 * state[3] - 1.5 * state[8];
+      u[3] = Math.max(-0.3, Math.min(0.3, u[3]));
+      // Yaw control
+      const yawErr = target[3] - state[4];
+      u[4] = 0.5 * yawErr - 0.8 * state[9];
+      u[4] = Math.max(-0.3, Math.min(0.3, u[4]));
+      return u;
+    }
+
+    function simulateStep(state, u) {
+      const damping = [1.0, 1.0, 1.5, 0.3, 0.3];
+      const next = new Float64Array(state);
+      // Update velocities with damping
+      for (let i = 0; i < 5; i++) {
+        next[i + 5] = (1 - damping[i] * DT) * state[i + 5] + DT * u[i];
+      }
+      // Update positions
+      for (let i = 0; i < 5; i++) {
+        next[i] += next[i + 5] * DT;
+      }
+      // Add small noise for realism
+      next[3] += (Math.random() - 0.5) * 0.003; // roll noise
+      next[8] += (Math.random() - 0.5) * 0.002; // dphi noise
+      return next;
+    }
+
+    function thrusterMixing(u, psi) {
+      const surge = u[0] * Math.cos(psi) + u[1] * Math.sin(psi);
+      const sway = -u[0] * Math.sin(psi) + u[1] * Math.cos(psi);
+      const heave = u[2];
+      const roll = u[3];
+      const yaw = u[4];
+      const t = [
+        surge + sway + yaw,
+        surge - sway - yaw,
+        -surge + sway - yaw,
+        -surge - sway + yaw,
+        heave + roll,
+        -(heave - roll),
+        -(heave + roll),
+        heave - roll
+      ];
+      return t.map(v => Math.max(-1, Math.min(1, v * 3.5))); // scale for visibility
+    }
+
+    function generatePrediction(state, target) {
+      const pts = [];
+      let s = new Float64Array(state);
+      for (let i = 0; i < N_PREDICT; i++) {
+        const u = computeControl(s, target);
+        s = simulateStep(s, u);
+        pts.push([s[0], s[1], s[2]]);
+      }
+      return pts;
+    }
+
+    // ===== RENDER FUNCTIONS =====
+
+    function renderVehicleState() {
+      const s = app.display;
+      const posErr = app.error;
+      const t = app.elapsed;
+
+      dom.stateContent.innerHTML = `
+        <div class="state-grid">
+          <div class="state-item">
+            <span class="state-label">x</span>
+            <span class="state-val">${s[0].toFixed(3)}<span class="state-unit">m</span></span>
+          </div>
+          <div class="state-item">
+            <span class="state-label">&phi; (roll)</span>
+            <span class="state-val">${(s[3] * 180 / Math.PI).toFixed(2)}<span class="state-unit">&deg;</span></span>
+          </div>
+          <div class="state-item">
+            <span class="state-label">y</span>
+            <span class="state-val">${s[1].toFixed(3)}<span class="state-unit">m</span></span>
+          </div>
+          <div class="state-item">
+            <span class="state-label">&psi; (yaw)</span>
+            <span class="state-val">${(s[4] * 180 / Math.PI).toFixed(2)}<span class="state-unit">&deg;</span></span>
+          </div>
+          <div class="state-item">
+            <span class="state-label">z</span>
+            <span class="state-val">${s[2].toFixed(3)}<span class="state-unit">m</span></span>
+          </div>
+          <div class="state-item">
+            <span class="state-label">time</span>
+            <span class="state-val">${t.toFixed(1)}<span class="state-unit">s</span></span>
+          </div>
+          <div class="state-divider"></div>
+          <div class="state-item">
+            <span class="state-label">dx</span>
+            <span class="state-val">${s[5].toFixed(3)}<span class="state-unit">m/s</span></span>
+          </div>
+          <div class="state-item">
+            <span class="state-label">dy</span>
+            <span class="state-val">${s[6].toFixed(3)}<span class="state-unit">m/s</span></span>
+          </div>
+          <div class="state-item">
+            <span class="state-label">dz</span>
+            <span class="state-val">${s[7].toFixed(3)}<span class="state-unit">m/s</span></span>
+          </div>
+          <div class="state-item">
+            <span class="state-label">d&psi;</span>
+            <span class="state-val">${s[9].toFixed(3)}<span class="state-unit">r/s</span></span>
+          </div>
+          <div class="state-highlight">
+            <span class="state-label">Position Error</span>
+            <span class="state-val">${posErr.toFixed(3)}<span class="state-unit">m</span></span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderThrusters() {
+      const labels = ['T1 (FR)', 'T2 (FL)', 'T3 (BR)', 'T4 (BL)', 'T5 (SF)', 'T6 (PF)', 'T7 (SB)', 'T8 (PB)'];
+      const u = computeControl(app.display, app.config ? app.config.target : [0, 0, 2, 0]);
+      const surge = u[0] * Math.cos(app.display[4]) + u[1] * Math.sin(app.display[4]);
+      const sway = -u[0] * Math.sin(app.display[4]) + u[1] * Math.cos(app.display[4]);
+      const heave = u[2];
+
+      let html = '<div class="thruster-group-label">Horizontal</div>';
+      for (let i = 0; i < 4; i++) {
+        html += renderBar('thruster', labels[i], app.thrusters[i]);
+      }
+      html += '<div class="thruster-group-label">Vertical</div>';
+      for (let i = 4; i < 8; i++) {
+        html += renderBar('thruster', labels[i], app.thrusters[i]);
+      }
+      html += `<div class="body-frame-summary">
+        <div class="body-val"><span class="body-val-label">surge</span><span class="body-val-num">${surge.toFixed(3)}</span></div>
+        <div class="body-val"><span class="body-val-label">sway</span><span class="body-val-num">${sway.toFixed(3)}</span></div>
+        <div class="body-val"><span class="body-val-label">heave</span><span class="body-val-num">${heave.toFixed(3)}</span></div>
+      </div>`;
+      dom.thrusterContent.innerHTML = html;
+    }
+
+    function renderControl() {
+      const labels = ['u_x', 'u_y', 'u_z', 'u_&phi;', 'u_&psi;'];
+      let html = '';
+      for (let i = 0; i < 5; i++) {
+        html += renderCtrlBar(labels[i], app.control[i]);
+      }
+      dom.controlContent.innerHTML = html;
+    }
+
+    function renderBar(type, label, value) {
+      const pct = Math.abs(value) * 50; // max 50% of track width
+      const isPos = value >= 0;
+      const left = isPos ? '50%' : `${50 - pct}%`;
+      return `<div class="${type}-row">
+        <span class="${type}-label">${label}</span>
+        <div class="${type}-track">
+          <div class="${type}-center"></div>
+          <div class="${type}-fill ${isPos ? 'positive' : 'negative'}" style="left:${left};width:${pct}%"></div>
+        </div>
+        <span class="${type}-val">${value >= 0 ? '+' : ''}${value.toFixed(3)}</span>
+      </div>`;
+    }
+
+    function renderCtrlBar(label, value) {
+      const pct = Math.min(Math.abs(value) / 0.3 * 50, 50);
+      const isPos = value >= 0;
+      const left = isPos ? '50%' : `${50 - pct}%`;
+      return `<div class="control-row">
+        <span class="ctrl-label">${label}</span>
+        <div class="ctrl-track">
+          <div class="ctrl-center"></div>
+          <div class="ctrl-fill ${isPos ? 'positive' : 'negative'}" style="left:${left};width:${pct}%"></div>
+        </div>
+        <span class="ctrl-val">${value >= 0 ? '+' : ''}${value.toFixed(4)}</span>
+      </div>`;
+    }
+
+    function renderOptimizer(config) {
+      if (!config) {
+        dom.optimizerContent.innerHTML = '<div class="empty-state">Awaiting subtask&hellip;</div>';
+        return;
+      }
+      const w = config.weights;
+      const maxQ = 10, maxR = 2;
+
+      let html = `
+        <div class="opt-target">
+          <div class="opt-target-item"><span class="opt-target-label">x</span><span class="opt-target-val">${config.target[0].toFixed(1)}</span></div>
+          <div class="opt-target-item"><span class="opt-target-label">y</span><span class="opt-target-val">${config.target[1].toFixed(1)}</span></div>
+          <div class="opt-target-item"><span class="opt-target-label">z</span><span class="opt-target-val">${config.target[2].toFixed(1)}</span></div>
+          <div class="opt-target-item"><span class="opt-target-label">&psi;</span><span class="opt-target-val">${config.target[3].toFixed(1)}</span></div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600;letter-spacing:0.5px">Q WEIGHTS (state cost)</div>
+      `;
+      const qWeights = [
+        ['Q_pos', w.Q_pos, maxQ],
+        ['Q_roll', w.Q_roll, maxQ],
+        ['Q_yaw', w.Q_yaw, maxQ],
+        ['Q_vel', w.Q_vel, 0.01]
+      ];
+      qWeights.forEach(([name, val, max]) => {
+        const pct = Math.min(val / max * 100, 100);
+        html += `<div class="weight-bar-row">
+          <span class="weight-bar-label">${name}</span>
+          <div class="weight-bar-track"><div class="weight-bar-fill" style="width:${pct}%"></div></div>
+          <span class="weight-bar-val">${val}</span>
+        </div>`;
+      });
+
+      html += `<div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin:10px 0 6px;font-weight:600;letter-spacing:0.5px">R WEIGHTS (control cost)</div>`;
+      const rWeights = [
+        ['R_lin', w.R_lin, maxR],
+        ['R_rot', w.R_rot, maxR]
+      ];
+      rWeights.forEach(([name, val, max]) => {
+        const pct = Math.min(val / max * 100, 100);
+        html += `<div class="weight-bar-row">
+          <span class="weight-bar-label">${name}</span>
+          <div class="weight-bar-track"><div class="weight-bar-fill r-weight" style="width:${pct}%"></div></div>
+          <span class="weight-bar-val">${val}</span>
+        </div>`;
+      });
+
+      html += '<div class="opt-divider"></div>';
+      html += `<div class="opt-params">
+        <div class="opt-param"><span class="opt-param-label">&gamma; (CBF)</span><span class="opt-param-val">${config.gamma}</span></div>
+        <div class="opt-param"><span class="opt-param-label">v_limit</span><span class="opt-param-val">${config.velocity_limit} m/s</span></div>
+        <div class="opt-param"><span class="opt-param-label">threshold</span><span class="opt-param-val">${config.completion_threshold} m</span></div>
+        <div class="opt-param"><span class="opt-param-label">timeout</span><span class="opt-param-val">${config.timeout} s</span></div>
+      </div>`;
+
+      if (config.obstacles.length > 0) {
+        html += '<div class="opt-divider"></div>';
+        html += '<div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600;letter-spacing:0.5px">OBSTACLES</div>';
+        config.obstacles.forEach(obs => {
+          html += `<div class="obstacle-item">
+            <div class="obstacle-dot"></div>
+            <div class="obstacle-info"><span class="obstacle-name">${obs.name}</span> &mdash; pos (${obs.position.map(v => v.toFixed(1)).join(', ')}), r=${obs.radius}</div>
+          </div>`;
+        });
+      }
+
+      dom.optimizerContent.innerHTML = html;
+    }
+
+    function renderTrajectory() {
+      const target = app.config ? app.config.target : null;
+      const obstacles = app.config ? app.config.obstacles : [];
+      const s = app.display;
+
+      // XY View
+      let xyDyn = '';
+      // Obstacles
+      obstacles.forEach(obs => {
+        const [cx, cy] = mapXY(obs.position[0], obs.position[1]);
+        const scale = (XY.r - XY.l) / (XY.xMax - XY.xMin);
+        const r = obs.radius * scale;
+        const rSafe = (obs.radius + 0.25) * scale;
+        xyDyn += `<circle cx="${cx}" cy="${cy}" r="${rSafe}" class="traj-obstacle-safety"/>`;
+        xyDyn += `<circle cx="${cx}" cy="${cy}" r="${r}" class="traj-obstacle"/>`;
+      });
+      // Target
+      if (target) {
+        const [tx, ty] = mapXY(target[0], target[1]);
+        xyDyn += `<line x1="${tx - 8}" y1="${ty}" x2="${tx + 8}" y2="${ty}" class="traj-target"/>`;
+        xyDyn += `<line x1="${tx}" y1="${ty - 8}" x2="${tx}" y2="${ty + 8}" class="traj-target"/>`;
+        xyDyn += `<circle cx="${tx}" cy="${ty}" r="4" fill="none" class="traj-target"/>`;
+      }
+      // History trail
+      if (app.history.length > 1) {
+        const pts = app.history.map(p => mapXY(p[0], p[1]).join(',')).join(' ');
+        xyDyn += `<polyline points="${pts}" class="traj-history"/>`;
+      }
+      // Predicted trajectory
+      if (app.predicted.length > 0) {
+        const pts = app.predicted.map(p => mapXY(p[0], p[1]).join(',')).join(' ');
+        xyDyn += `<polyline points="${pts}" class="traj-predicted"/>`;
+      }
+      // Vehicle position
+      const [vx, vy] = mapXY(s[0], s[1]);
+      xyDyn += `<circle cx="${vx}" cy="${vy}" r="5" class="traj-vehicle"/>`;
+      if (app.running) {
+        xyDyn += `<circle cx="${vx}" cy="${vy}" class="traj-ping"/>`;
+      }
+      xyDyn += `<circle cx="${vx}" cy="${vy}" r="10" class="traj-vehicle-ring"/>`;
+
+      document.getElementById('xyDynamic').innerHTML = xyDyn;
+
+      // XZ View
+      let xzDyn = '';
+      obstacles.forEach(obs => {
+        const [cx, cz] = mapXZ(obs.position[0], obs.position[2]);
+        const scale = (XZ.r - XZ.l) / (XZ.xMax - XZ.xMin);
+        const r = obs.radius * scale;
+        const rSafe = (obs.radius + 0.25) * scale;
+        xzDyn += `<circle cx="${cx}" cy="${cz}" r="${rSafe}" class="traj-obstacle-safety"/>`;
+        xzDyn += `<circle cx="${cx}" cy="${cz}" r="${r}" class="traj-obstacle"/>`;
+      });
+      if (target) {
+        const [tx, tz] = mapXZ(target[0], target[2]);
+        xzDyn += `<line x1="${tx - 8}" y1="${tz}" x2="${tx + 8}" y2="${tz}" class="traj-target"/>`;
+        xzDyn += `<line x1="${tx}" y1="${tz - 8}" x2="${tx}" y2="${tz + 8}" class="traj-target"/>`;
+        xzDyn += `<circle cx="${tx}" cy="${tz}" r="4" fill="none" class="traj-target"/>`;
+      }
+      if (app.history.length > 1) {
+        const pts = app.history.map(p => mapXZ(p[0], p[2]).join(',')).join(' ');
+        xzDyn += `<polyline points="${pts}" class="traj-history"/>`;
+      }
+      if (app.predicted.length > 0) {
+        const pts = app.predicted.map(p => mapXZ(p[0], p[2]).join(',')).join(' ');
+        xzDyn += `<polyline points="${pts}" class="traj-predicted"/>`;
+      }
+      const [vzx, vzz] = mapXZ(s[0], s[2]);
+      xzDyn += `<circle cx="${vzx}" cy="${vzz}" r="5" class="traj-vehicle"/>`;
+      if (app.running) {
+        xzDyn += `<circle cx="${vzx}" cy="${vzz}" class="traj-ping"/>`;
+      }
+      xzDyn += `<circle cx="${vzx}" cy="${vzz}" r="10" class="traj-vehicle-ring"/>`;
+
+      document.getElementById('xzDynamic').innerHTML = xzDyn;
+    }
+
+    // ===== RENDER LOOP (smooth display interpolation) =====
+    function renderLoop() {
+      // Lerp display values toward actual state
+      const lerpSpeed = 0.18;
+      for (let i = 0; i < 10; i++) {
+        app.display[i] += (app.state[i] - app.display[i]) * lerpSpeed;
+      }
+
+      renderVehicleState();
+      renderThrusters();
+      renderControl();
+      renderTrajectory();
+
+      requestAnimationFrame(renderLoop);
+    }
+
+    // ===== DEMO SEQUENCE =====
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    async function handleSend() {
+      const query = dom.queryInput.value.trim();
+      if (!query || app.phase !== 'idle') return;
+
+      app.phase = 'running';
+      app.query = query;
+      dom.sendBtn.disabled = true;
+
+      if (wsMode && ws && ws.readyState === WebSocket.OPEN) {
+        // Send query to backend via WebSocket — server drives all updates
+        ws.send(JSON.stringify({ type: 'query', text: query }));
+        setStatus('planning');
+      } else {
+        // Fallback: local mock demo
+        await runDemo(query);
+        app.phase = 'idle';
+        dom.sendBtn.disabled = false;
+      }
+    }
+
+    async function runDemo(query) {
+      // Reset state
+      app.state = new Float64Array([0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
+      app.display = new Float64Array([0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
+      app.history = [[0, 0, 2]];
+      app.predicted = [];
+      app.thrusters = new Float64Array(8);
+      app.control = new Float64Array(5);
+      app.elapsed = 0;
+      app.error = 0;
+      app.config = null;
+      app.running = false;
+
+      // Phase 1: Planning
+      setStatus('planning');
+      setTimelinePhase(1);
+      dom.plannerEmpty.style.display = 'none';
+
+      // Show thinking bar
+      dom.optThinking.classList.add('active');
+
+      // Reveal subtasks one by one
+      app.subtasks = MOCK_SUBTASKS;
+      dom.subtaskFlow.innerHTML = '';
+
+      for (let i = 0; i < app.subtasks.length; i++) {
+        const st = app.subtasks[i];
+        if (i > 0) {
+          const arrow = document.createElement('div');
+          arrow.className = 'subtask-arrow';
+          arrow.innerHTML = '&rarr;';
+          dom.subtaskFlow.appendChild(arrow);
+        }
+        const card = document.createElement('div');
+        card.className = 'subtask-card';
+        card.id = `subtask-${st.id}`;
+        card.innerHTML = `
+          <div class="card-head">
+            <span class="subtask-id">Subtask ${st.id}</span>
+            <span class="subtask-badge ${st.type}">${st.type.replace('_', ' ')}</span>
+          </div>
+          <div class="subtask-instruction">${st.instruction}</div>
+          <div class="subtask-check">&#10003;</div>
+        `;
+        dom.subtaskFlow.appendChild(card);
+        await sleep(400);
+        card.classList.add('visible');
+        await sleep(300);
+      }
+
+      // Show token usage
+      dom.plannerMeta.innerHTML = `
+        <span>Tokens: ${TOKEN_USAGE.planner.prompt} prompt / ${TOKEN_USAGE.planner.completion} completion</span>
+        <span>Model: claude-sonnet-4-6</span>
+      `;
+
+      await sleep(600);
+      dom.optThinking.classList.remove('active');
+
+      // Phase 2: Execute subtasks
+      for (let idx = 0; idx < app.subtasks.length; idx++) {
+        app.activeIdx = idx;
+        setTimelinePhase(2 + idx);
+        setStatus('live');
+
+        // Highlight active card
+        document.querySelectorAll('.subtask-card').forEach((c, i) => {
+          c.classList.remove('active');
+          if (i === idx) c.classList.add('active');
+        });
+
+        // Update arrows
+        document.querySelectorAll('.subtask-arrow').forEach((a, i) => {
+          a.classList.toggle('completed', i < idx);
+        });
+
+        // Show optimizer config
+        app.config = MOCK_CONFIGS[idx];
+        dom.optThinking.classList.add('active');
+        await sleep(800);
+        dom.optThinking.classList.remove('active');
+        renderOptimizer(app.config);
+
+        // Run simulation
+        app.running = true;
+        app.elapsed = 0;
+
+        await new Promise(resolve => {
+          const target = app.config.target;
+          app.simTimer = setInterval(() => {
+            const u = computeControl(app.state, target);
+            app.state = simulateStep(app.state, u);
+            app.control = u;
+            app.thrusters = new Float64Array(thrusterMixing(u, app.state[4]));
+            app.elapsed += DT;
+
+            // Record history (every 3rd step to avoid too many points)
+            if (app.history.length === 0 || app.elapsed % 0.3 < DT) {
+              app.history.push([app.state[0], app.state[1], app.state[2]]);
+            }
+
+            // Generate prediction
+            app.predicted = generatePrediction(app.state, target);
+
+            // Check completion
+            const dx = target[0] - app.state[0];
+            const dy = target[1] - app.state[1];
+            const dz = target[2] - app.state[2];
+            app.error = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (app.error < app.config.completion_threshold || app.elapsed > app.config.timeout) {
+              clearInterval(app.simTimer);
+              app.running = false;
+              resolve();
+            }
+          }, SIM_INTERVAL);
+        });
+
+        // Mark subtask complete
+        const card = document.getElementById(`subtask-${app.subtasks[idx].id}`);
+        card.classList.remove('active');
+        card.classList.add('completed');
+
+        // Brief pause
+        await sleep(500);
+      }
+
+      // Phase 3: Complete
+      setTimelinePhase(4);
+      setStatus('complete');
+      app.config = null;
+      app.predicted = [];
+      renderOptimizer(null);
+      dom.optimizerContent.innerHTML = '<div class="empty-state" style="color:var(--success);font-weight:600">Mission complete &#10003;</div>';
+
+      // Fade out control signals
+      app.control = new Float64Array(5);
+      app.thrusters = new Float64Array(8);
+    }
+
+    // ===== WEBSOCKET =====
+    function connectWebSocket() {
+      try {
+        ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+      } catch (e) {
+        return; // silently fail — demo mode
+      }
+
+      ws.onopen = () => {
+        wsMode = true;
+        dom.wsBadge.classList.add('connected');
+        dom.wsBadgeText.textContent = 'WS: Connected';
+        setStatus('idle');
+      };
+
+      ws.onclose = () => {
+        wsMode = false;
+        dom.wsBadge.classList.remove('connected');
+        dom.wsBadgeText.textContent = 'WS: Offline';
+        setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onerror = () => {
+        // onclose will fire after this
+      };
+
+      ws.onmessage = (e) => {
+        try {
+          handleServerMessage(JSON.parse(e.data));
+        } catch (err) {
+          console.warn('Failed to parse WS message:', err);
+        }
+      };
+    }
+
+    // Track which WS subtask index we're on for timeline mapping
+    let _wsSubtaskIndex = 0;
+
+    function handleServerMessage(msg) {
+      switch (msg.type) {
+        case 'status':
+          if (msg.phase === 'idle') {
+            setStatus('idle');
+            setTimelinePhase(0);
+          }
+          break;
+
+        case 'subtasks': {
+          // Render subtask cards
+          app.subtasks = msg.subtasks;
+          dom.plannerEmpty.style.display = 'none';
+          dom.subtaskFlow.innerHTML = '';
+          _wsSubtaskIndex = 0;
+
+          // Rebuild timeline for N subtasks
+          buildTimeline(msg.subtasks.length);
+          setTimelinePhase(1); // Planning done
+          setStatus('planning');
+
+          msg.subtasks.forEach((st, i) => {
+            if (i > 0) {
+              const arrow = document.createElement('div');
+              arrow.className = 'subtask-arrow';
+              arrow.innerHTML = '&rarr;';
+              dom.subtaskFlow.appendChild(arrow);
+            }
+            const card = document.createElement('div');
+            card.className = 'subtask-card visible';
+            card.id = `subtask-${st.id}`;
+            card.innerHTML = `
+              <div class="card-head">
+                <span class="subtask-id">Subtask ${st.id}</span>
+                <span class="subtask-badge ${st.type}">${st.type.replace('_', ' ')}</span>
+              </div>
+              <div class="subtask-instruction">${st.instruction}</div>
+              <div class="subtask-check">&#10003;</div>
+            `;
+            dom.subtaskFlow.appendChild(card);
+          });
+
+          // Token usage
+          const tok = msg.tokens || {};
+          dom.plannerMeta.innerHTML = `
+            <span>Tokens: ${tok.prompt_tokens || '?'} prompt / ${tok.completion_tokens || '?'} completion</span>
+            <span>Model: claude-sonnet-4-6</span>
+          `;
+          break;
+        }
+
+        case 'subtask_active': {
+          // Highlight active card, reset history trail
+          app.history = [[app.state[0], app.state[1], app.state[2]]];
+          app.predicted = [];
+          app.running = true;
+          app.elapsed = 0;
+          app.error = 0;
+          setStatus('live');
+
+          // Find index of this subtask
+          _wsSubtaskIndex = app.subtasks.findIndex(s => s.id === msg.id);
+          if (_wsSubtaskIndex < 0) _wsSubtaskIndex = 0;
+          setTimelinePhase(2 + _wsSubtaskIndex);
+
+          document.querySelectorAll('.subtask-card').forEach((c, i) => {
+            c.classList.remove('active');
+            if (i === _wsSubtaskIndex) c.classList.add('active');
+          });
+          document.querySelectorAll('.subtask-arrow').forEach((a, i) => {
+            a.classList.toggle('completed', i < _wsSubtaskIndex);
+          });
+
+          // Show thinking bar while optimizer works
+          dom.optThinking.classList.add('active');
+          break;
+        }
+
+        case 'subtask_skipped': {
+          const idx = app.subtasks.findIndex(s => s.id === msg.id);
+          if (idx >= 0) {
+            const card = document.getElementById(`subtask-${msg.id}`);
+            if (card) {
+              card.classList.remove('active');
+              card.style.opacity = '0.4';
+            }
+          }
+          break;
+        }
+
+        case 'mpc_config': {
+          dom.optThinking.classList.remove('active');
+          app.config = {
+            target: msg.target,
+            weights: msg.weights,
+            gamma: msg.gamma,
+            obstacles: msg.obstacles || [],
+            velocity_limit: msg.velocity_limit,
+            completion_threshold: msg.completion_threshold,
+            timeout: msg.timeout,
+          };
+          renderOptimizer(app.config);
+          break;
+        }
+
+        case 'mpc_config_error': {
+          dom.optThinking.classList.remove('active');
+          dom.optimizerContent.innerHTML = `<div class="empty-state" style="color:var(--coral)">Error: ${msg.error}</div>`;
+          break;
+        }
+
+        case 'control_update': {
+          // Update vehicle state
+          app.state = new Float64Array(msg.state);
+          app.control = new Float64Array(msg.control);
+          app.thrusters = new Float64Array(msg.thrusters);
+          app.error = msg.error;
+          app.elapsed = msg.elapsed;
+          app.predicted = msg.predicted || [];
+
+          // Record history (every ~3rd step)
+          const lastH = app.history[app.history.length - 1];
+          const dx = msg.state[0] - lastH[0];
+          const dy = msg.state[1] - lastH[1];
+          const dz = msg.state[2] - lastH[2];
+          if (dx * dx + dy * dy + dz * dz > 0.005) {
+            app.history.push([msg.state[0], msg.state[1], msg.state[2]]);
+          }
+          break;
+        }
+
+        case 'subtask_complete': {
+          app.running = false;
+          const card = document.getElementById(`subtask-${msg.id}`);
+          if (card) {
+            card.classList.remove('active');
+            card.classList.add('completed');
+          }
+          break;
+        }
+
+        case 'all_complete': {
+          app.running = false;
+          app.predicted = [];
+          app.control = new Float64Array(5);
+          app.thrusters = new Float64Array(8);
+          setTimelinePhase(_timelineIds.length - 1);
+          setStatus('complete');
+          dom.optimizerContent.innerHTML = '<div class="empty-state" style="color:var(--success);font-weight:600">Mission complete &#10003;</div>';
+
+          // Re-enable input for next query
+          app.phase = 'idle';
+          dom.sendBtn.disabled = false;
+          break;
+        }
+      }
+    }
+
+    // ===== START =====
+    init();
+  </script>
+</body>
+</html>
