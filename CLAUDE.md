@@ -33,14 +33,14 @@ ros2 topic pub --once /chatboat/mpc_bridge/goal geometry_msgs/PoseStamped \
   '{header: {frame_id: "world"}, pose: {position: {x: 2.0, y: 0.0, z: 2.0}, orientation: {w: 1.0}}}'
 ```
 
-### llm2control (standalone — requires system Python, NOT Poetry venv)
+### llm2control (standalone — requires Python 3.10 with ROS2)
 ```bash
 source /opt/ros/humble/setup.bash
 source install/setup.bash
-pip install openai numpy casadi
-cd src && OPENROUTER_API_KEY=... python -m llm2control.main
+python3.10 -m pip install openai numpy casadi
+cd src && OPENROUTER_API_KEY=... python3.10 -m llm2control.main
 ```
-**WARNING:** Running via `poetry run` uses a venv without rclpy → falls back to mock mode silently. Always use the system Python with ROS2 sourced.
+**WARNING:** Must use `python3.10` explicitly — ROS2 Humble's rclpy is built for Python 3.10. The default `python` (3.11) cannot load rclpy's C extensions. Running via `poetry run` also fails (venv without rclpy). If you see "rclpy not available — running in MOCK mode", you're using the wrong Python.
 
 ## Critical Rules
 
