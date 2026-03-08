@@ -56,21 +56,19 @@ class VehicleTeleop(Node):
         heave = self._heave
 
         # Horizontal thrusters at ±45° angles
-        t1 = surge    # FrontRight
-        t2 = surge    # FrontLeft
-        t3 = -surge   # BackRight
-        t4 = -surge   # BackLeft
+        # FR and FL are inverted=true in Stonefish, so pre-negate
+        t1 = -surge   # FrontRight (inverted=true, pre-negate)
+        t2 = -surge   # FrontLeft  (inverted=true, pre-negate)
+        t3 = -surge   # BackRight  (inverted=false)
+        t4 = -surge   # BackLeft   (inverted=false)
 
         # Vertical thrusters with roll compensation
-        # Propeller reaction torques during surge all project positively
-        # onto the roll axis → robot rolls starboard-down.
-        # Counter by: starboard thrusters push UP, port push DOWN.
-        # DFR/DBR are starboard (y>0), DFL/DBL are port (y<0).
+        # DFL and DBR are inverted=true in Stonefish, so pre-negate
         roll_comp = self._roll_comp * surge
-        t5 = heave - roll_comp   # DFR (starboard) — less down
-        t6 = heave + roll_comp   # DFL (port) — more down
-        t7 = heave - roll_comp   # DBR (starboard) — less down
-        t8 = heave + roll_comp   # DBL (port) — more down
+        t5 =  heave - roll_comp    # DFR (inverted=false)
+        t6 = -(heave + roll_comp)  # DFL (inverted=true, pre-negate)
+        t7 = -(heave - roll_comp)  # DBR (inverted=true, pre-negate)
+        t8 =  heave + roll_comp    # DBL (inverted=false)
 
         msg = Float64MultiArray()
         msg.data = [max(-MAX_SETPOINT, min(MAX_SETPOINT, t))

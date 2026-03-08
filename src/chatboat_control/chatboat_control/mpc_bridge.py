@@ -45,14 +45,14 @@ def _world_to_body(u_x: float, u_y: float, psi: float):
 def _thruster_mixing(surge: float, sway: float, heave: float,
                      yaw: float) -> list[float]:
     """BlueROV2 Heavy 8-thruster mixing. Returns values in [-1, 1]."""
-    t1 = surge + sway + yaw   # FrontRight
-    t2 = surge - sway - yaw   # FrontLeft
-    t3 = -surge + sway - yaw  # BackRight
-    t4 = -surge - sway + yaw  # BackLeft
-    t5 =   heave              # DFR starboard-front (inverted=false)
-    t6 = -(heave)             # DFL port-front      (inverted=true, pre-negate)
-    t7 = -(heave)             # DBR starboard-back  (inverted=true, pre-negate)
-    t8 =   heave              # DBL port-back       (inverted=false)
+    t1 = -(surge + sway + yaw)  # FrontRight (inverted=true, pre-negate)
+    t2 = -(surge - sway - yaw)  # FrontLeft  (inverted=true, pre-negate)
+    t3 = -surge + sway - yaw    # BackRight  (inverted=false)
+    t4 = -surge - sway + yaw    # BackLeft   (inverted=false)
+    t5 =   heave                # DFR starboard-front (inverted=false)
+    t6 = -(heave)               # DFL port-front      (inverted=true, pre-negate)
+    t7 = -(heave)               # DBR starboard-back  (inverted=true, pre-negate)
+    t8 =   heave                # DBL port-back       (inverted=false)
     return [max(-1.0, min(1.0, t)) for t in [t1, t2, t3, t4, t5, t6, t7, t8]]
 
 
