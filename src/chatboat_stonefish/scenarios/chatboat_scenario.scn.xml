@@ -126,64 +126,64 @@
 
       <!-- Buoyancy boxes (4 corners, raised high for max righting moment) -->
       <internal_part name="BackLeft" type="box" physics="submerged" buoyant="true">
-        <dimensions xyz="0.2 0.15 0.105"/>
+        <dimensions xyz="0.2 0.15 0.129"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Neutral"/>
         <look name="None"/>
         <mass value="0.025"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.1 -0.1 -0.08"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.1 -0.1 -0.10"/>
       </internal_part>
       <internal_part name="BackRight" type="box" physics="submerged" buoyant="true">
-        <dimensions xyz="0.2 0.15 0.105"/>
+        <dimensions xyz="0.2 0.15 0.129"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Neutral"/>
         <look name="None"/>
         <mass value="0.025"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.1 0.1 -0.08"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.1 0.1 -0.10"/>
       </internal_part>
       <internal_part name="FrontLeft" type="box" physics="submerged" buoyant="true">
-        <dimensions xyz="0.2 0.15 0.105"/>
+        <dimensions xyz="0.2 0.15 0.129"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Neutral"/>
         <look name="None"/>
         <mass value="0.025"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 -0.1 -0.08"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 -0.1 -0.10"/>
       </internal_part>
       <internal_part name="FrontRight" type="box" physics="submerged" buoyant="true">
-        <dimensions xyz="0.2 0.15 0.105"/>
+        <dimensions xyz="0.2 0.15 0.129"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Neutral"/>
         <look name="None"/>
         <mass value="0.025"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 0.1 -0.08"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.09 0.1 -0.10"/>
       </internal_part>
 
       <!-- Ballast weights (heavy + low for max righting moment) -->
-      <!-- Buoyancy budget: 4 boxes × (0.2×0.15×0.105) × 1025 ≈ 12.9 kg -->
-      <!-- Mass budget: hull 9.0 + boxes 0.1 + arm ~1.7 + weights 2.0 → ~12.8 kg -->
+      <!-- Buoyancy budget: 4 boxes × (0.2×0.15×0.129) × 1025 ≈ 15.9 kg -->
+      <!-- Mass budget: hull 9.0 + boxes 0.1 + arm ~1.7 + weights 5.0 → ~15.8 kg -->
       <internal_part name="WeightCenter" type="sphere" physics="submerged" buoyant="false">
         <dimensions radius="0.01"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="1.0"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.05 0.0 0.25"/>
+        <mass value="2.5"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="-0.05 0.0 0.30"/>
       </internal_part>
       <internal_part name="WeightLeft" type="sphere" physics="submerged" buoyant="false">
         <dimensions radius="0.01"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="0.5"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 -0.075 0.25"/>
+        <mass value="1.25"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 -0.075 0.30"/>
       </internal_part>
       <internal_part name="WeightRight" type="sphere" physics="submerged" buoyant="false">
         <dimensions radius="0.01"/>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <material name="Steel"/>
         <look name="black"/>
-        <mass value="0.5"/>
-        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.075 0.25"/>
+        <mass value="1.25"/>
+        <compound_transform rpy="0.0 0.0 0.0" xyz="0.0 0.075 0.30"/>
       </internal_part>
     </base_link>
 
