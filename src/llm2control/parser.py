@@ -4,7 +4,9 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from llm2control.config import VALID_PROBLEM_TYPES, PROBLEM_TYPE_GENERAL
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -22,7 +24,6 @@ class MPCConfig:
     Q: np.ndarray               # 10x10 diagonal
     R: np.ndarray               # 5x5 diagonal
     gamma: float                # CBF safety parameter (0, 1]
-    problem_type: str = "general"  # general | descent_ascent | lateral
     obstacles: list[dict] = field(default_factory=list)
     velocity_limit: float = 0.5
     completion_threshold: float = 0.15
@@ -78,13 +79,9 @@ def parse_mpc_config(raw: dict) -> MPCConfig:
     ------
     ValueError if validation fails
     """
-    # Problem type
-    problem_type = str(raw.get("problem_type", PROBLEM_TYPE_GENERAL))
-    if problem_type not in VALID_PROBLEM_TYPES:
-        raise ValueError(
-            f"Unknown problem_type '{problem_type}', "
-            f"must be one of {sorted(VALID_PROBLEM_TYPES)}"
-        )
+    # Ignore problem_type if the LLM still emits one (backward compat)
+    if "problem_type" in raw and raw["problem_type"] != "unsupported":
+        logger.debug("Ignoring legacy problem_type '%s'", raw["problem_type"])
 
     # Target
     target = np.array(raw["vehicle_target"], dtype=float)
@@ -99,9 +96,7 @@ def parse_mpc_config(raw: dict) -> MPCConfig:
     R_lin = float(w["R_lin"])
     R_rot = float(w["R_rot"])
 
-    # Q_roll: default 0.0 for general (backwards-compatible), expected for
-    # descent_ascent / lateral where roll stabilization matters.
-    Q_roll = float(w.get("Q_roll", 0.0))
+    Q_roll = float(w.get("Q_roll", 5.0))
 
     # 10x10: [x, y, z, roll, yaw, vx, vy, vz, v_roll, v_yaw]
     Q = np.diag([Q_pos, Q_pos, Q_pos, Q_roll, Q_yaw,
@@ -129,7 +124,6 @@ def parse_mpc_config(raw: dict) -> MPCConfig:
         Q=Q,
         R=R,
         gamma=gamma,
-        problem_type=problem_type,
         obstacles=obstacles,
         velocity_limit=float(raw.get("velocity_limit", 0.5)),
         completion_threshold=float(raw.get("completion_threshold", 0.15)),

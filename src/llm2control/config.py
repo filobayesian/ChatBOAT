@@ -49,9 +49,3 @@ KNOWN_OBJECTS = [
     {"name": "red_cube", "position": CUBE_A_POS.tolist(), "radius": CUBE_RADIUS},
     {"name": "green_cube", "position": CUBE_B_POS.tolist(), "radius": CUBE_RADIUS},
 ]
-
-# ── MPC Problem Types ────────────────────────────────────────────────────
-PROBLEM_TYPE_GENERAL = "general"        # original 8D behavior (legacy)
-PROBLEM_TYPE_DESCENT = "descent_ascent" # vertical movement + roll stabilization
-PROBLEM_TYPE_LATERAL = "lateral"        # horizontal movement + orientation stabilization
-VALID_PROBLEM_TYPES = {PROBLEM_TYPE_GENERAL, PROBLEM_TYPE_DESCENT, PROBLEM_TYPE_LATERAL}

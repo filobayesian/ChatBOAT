@@ -6,10 +6,7 @@ avoidance constraints.
 State x = [x, y, z, phi, psi, dx, dy, dz, dphi, dpsi]  (10D)
 Control u = [u_x, u_y, u_z, u_phi, u_psi]               (5D, world-frame accelerations)
 
-Problem types:
-  - "general"        : full 10D, all 5 controls active (default/legacy)
-  - "descent_ascent" : only u_z and u_phi active (vertical + roll stabilisation)
-  - "lateral"        : u_x, u_y, u_phi, u_psi active (horizontal + orientation)
+All 5 controls are always active. Roll stabilisation is handled via Q_roll weight.
 """
 
 import numpy as np
@@ -31,8 +28,6 @@ from llm2control.config import (
 )
 from llm2control.dynamics import vehicle_dynamics_matrices
 
-VALID_PROBLEM_TYPES = {"general", "descent_ascent", "lateral"}
-
 
 class VehicleMPCSolver:
     """Receding-horizon MPC for BlueROV2 vehicle navigation.
@@ -41,7 +36,6 @@ class VehicleMPCSolver:
     - Quadratic tracking cost (position + roll + yaw + velocity regularisation)
     - CBF obstacle-avoidance constraints
     - Workspace & actuation bounds
-    - Problem-type-specific control constraints
     """
 
     def __init__(self, dt: float = MPC_DT, horizon: int = MPC_HORIZON):
@@ -59,7 +53,6 @@ class VehicleMPCSolver:
         self.v_max = V_MAX_DEFAULT
         self.u_max = U_MAX_DEFAULT
         self.lam_vel = 0.001  # velocity regularisation weight
-        self.problem_type = "general"
 
         # Warm-start storage
         self._prev_x: np.ndarray | None = None
@@ -70,8 +63,7 @@ class VehicleMPCSolver:
     def configure(self, target: np.ndarray, Q: np.ndarray, R: np.ndarray,
                   gamma: float, obstacles: list[dict],
                   v_max: float = V_MAX_DEFAULT,
-                  u_max: float = U_MAX_DEFAULT,
-                  problem_type: str = "general"):
+                  u_max: float = U_MAX_DEFAULT):
         """Set MPC parameters (called once per subtask)."""
         self.target = np.asarray(target, dtype=float)
         self.Q = np.asarray(Q, dtype=float)
@@ -80,12 +72,6 @@ class VehicleMPCSolver:
         self.obstacles = obstacles
         self.v_max = float(v_max)
         self.u_max = float(u_max)
-        if problem_type not in VALID_PROBLEM_TYPES:
-            raise ValueError(
-                f"Unknown problem_type '{problem_type}'. "
-                f"Must be one of {VALID_PROBLEM_TYPES}"
-            )
-        self.problem_type = problem_type
         # Reset warm start on new subtask
         self._prev_x = None
         self._prev_u = None
@@ -100,7 +86,6 @@ class VehicleMPCSolver:
             obstacles=config.obstacles,
             v_max=config.velocity_limit,
             u_max=U_MAX_DEFAULT,
-            problem_type=getattr(config, "problem_type", "general"),
         )
 
     def update_gamma(self, new_gamma: float):
@@ -175,33 +160,17 @@ class VehicleMPCSolver:
 
         # ── Constraints ──────────────────────────────────────────────────
 
-        # Problem type constraints — determine which control axes are active
-        # Velocity bounds are only applied on axes with active controls,
-        # otherwise the solver cannot correct drift and declares infeasible.
-        if self.problem_type == "descent_ascent":
-            active_axes = {2, 3}  # u_z, u_phi
-            for k in range(N):
-                opti.subject_to(U[0, k] == 0)  # no surge
-                opti.subject_to(U[1, k] == 0)  # no sway
-                opti.subject_to(U[4, k] == 0)  # no yaw
-        elif self.problem_type == "lateral":
-            active_axes = {0, 1, 3, 4}  # u_x, u_y, u_phi, u_psi
-            for k in range(N):
-                opti.subject_to(U[2, k] == 0)  # no heave
-        else:
-            active_axes = {0, 1, 2, 3, 4}  # all active
-
         # ── Adaptive per-axis velocity bounds ──────────────────────────
         # The configured v_max may be infeasible when the initial state
         # has velocities that cannot be brought within bounds in one step
         # (given damping and u_max).  Compute the minimum feasible bound
-        # for each active axis:
+        # for each axis:
         #   1. Self-consistency: bound >= dt*u_max / (1 - decay)
         #      so that any velocity within bounds stays within bounds.
         #   2. Initial-state feasibility: bound >= decay*|v0| - dt*u_max
         #      so the very first prediction step is achievable.
         v_bounds = np.full(5, self.v_max)
-        for j in active_axes:
+        for j in range(5):
             decay_j = 1.0 - DAMPING_LINEAR[j] * dt
             # Self-consistency
             denom = 1.0 - decay_j
@@ -219,8 +188,8 @@ class VehicleMPCSolver:
             for j in range(5):
                 opti.subject_to(opti.bounded(-self.u_max, U[j, k], self.u_max))
 
-            # Velocity limits (only on axes with active controls)
-            for j in active_axes:
+            # Velocity limits (all axes)
+            for j in range(5):
                 opti.subject_to(opti.bounded(-v_bounds[j], X[5 + j, k + 1], v_bounds[j]))
 
             # Workspace bounds (position)

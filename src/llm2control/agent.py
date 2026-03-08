@@ -178,6 +178,7 @@ class LaMPCAgent:
         logger.info("Optimization formulator response logged to %s", _LOG_DIR / "llm_audit.jsonl")
 
         # Handle unsupported tasks flagged by the optimization formulator
+        # (legacy: problem_type field may still appear from LLM)
         if raw.get("problem_type") == "unsupported":
             raise ValueError(
                 f"Optimization Formulator marked subtask as unsupported: "

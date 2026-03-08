@@ -74,12 +74,10 @@ cd src && OPENROUTER_API_KEY=... python3.10 -m llm2control.main
 - Roll target is always 0; penalized via `Q_roll` weight in cost function
 - Vertical thrusters produce roll via differential thrust: T5/T7 (port) = heave+roll, T6/T8 (starboard) = heave-roll
 
-### MPC Problem Types
-Three problem types enforce single-axis movement to prioritize roll stabilization:
-- **`descent_ascent`**: only `u_z` + `u_phi` active — for vertical movement with roll stabilization
-- **`lateral`**: `u_x` + `u_y` + `u_phi` + `u_psi` active — for horizontal movement with orientation stabilization
-- **`general`**: all 5 controls active — legacy/fallback, avoid when possible
-- Combined vertical+horizontal movements MUST be decomposed into sequential subtasks
+### MPC Control
+- All 5 controls are always active — no axis restrictions
+- Roll stabilisation is handled via `Q_roll` weight in cost function (typical: 3.0–8.0)
+- The controller handles simultaneous 3D navigation + roll stabilisation
 - Unsupported tasks (manipulation, grasping) are rejected by task planner and optimizer
 
 ## Key Files
@@ -92,8 +90,8 @@ Three problem types enforce single-axis movement to prioritize roll stabilizatio
 - MPC solver: `src/llm2control/mpc.py` (CasADi/IPOPT, 10D damped double integrator with CBF + roll)
 - Dynamics: `src/llm2control/dynamics.py` (10D model, thruster mixing with roll)
 - ROS bridge: `src/llm2control/ros_bridge.py` (10D odom subscriber + thruster publisher)
-- Parser: `src/llm2control/parser.py` (MPCConfig with problem_type, 10x10 Q, 5x5 R)
-- Config: `src/llm2control/config.py` (topics, workspace bounds, MPC defaults, damping coefficients, problem types, thrust scale)
+- Parser: `src/llm2control/parser.py` (MPCConfig, 10x10 Q, 5x5 R)
+- Config: `src/llm2control/config.py` (topics, workspace bounds, MPC defaults, damping coefficients, thrust scale)
 - Prompts: `src/llm2control/prompts/` (task_planner.py, optimization_formulator.py)
 
 ## ROS2 Topics
