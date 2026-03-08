@@ -1,0 +1,21 @@
+[project]
+name = "llm2control"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Nikilesh Ramesh",email = "nikileshramesh2003@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "openai (>=1.78.0,<2.0.0)",
+    "numpy (>=2.4.2,<3.0.0)",
+    "cvxpy (>=1.8.1,<2.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "llm2control", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

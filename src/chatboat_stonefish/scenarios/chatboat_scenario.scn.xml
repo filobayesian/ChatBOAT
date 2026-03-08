@@ -454,18 +454,22 @@
     <actuator name="servo_e" type="servo">
       <joint name="axis_e"/>
       <controller position_gain="2.0" velocity_gain="3.0" max_torque="3.0"/>
+      <initial position="2.64"/>
     </actuator>
     <actuator name="servo_d" type="servo">
       <joint name="axis_d"/>
       <controller position_gain="2.0" velocity_gain="3.0" max_torque="3.0"/>
+      <initial position="2.22"/>
     </actuator>
     <actuator name="servo_c" type="servo">
       <joint name="axis_c"/>
       <controller position_gain="2.0" velocity_gain="3.0" max_torque="3.0"/>
+      <initial position="2.64"/>
     </actuator>
     <actuator name="servo_b" type="servo">
       <joint name="axis_b"/>
       <controller position_gain="2.0" velocity_gain="3.0" max_torque="3.0"/>
+      <initial position="0.04"/>
     </actuator>
 
 
